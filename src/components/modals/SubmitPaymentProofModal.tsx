@@ -1,0 +1,264 @@
+import React, { useState } from 'react';
+import { X, Upload, Sparkles, Image as ImageIcon, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Deal } from '../../types';
+import { generateReceiptDataUrl } from '../../utils/receiptGenerator';
+import { formatBdt } from '../../utils/calculations';
+
+interface SubmitPaymentProofModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  deal: Deal;
+  onSubmit: (dealId: string, amountBdt: number, proofUrl: string, note?: string) => void;
+}
+
+export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = ({
+  isOpen,
+  onClose,
+  deal,
+  onSubmit,
+}) => {
+  const currentRemaining = deal.dueAmount || deal.expectedBdtAmount - deal.paidAmount;
+  const [amountBdt, setAmountBdt] = useState<number | ''>(currentRemaining);
+  const [proofUrl, setProofUrl] = useState<string>('');
+  const [note, setNote] = useState('');
+  const [paymentChannel, setPaymentChannel] = useState('bKash');
+
+  if (!isOpen) return null;
+
+  const numAmount = typeof amountBdt === 'number' ? amountBdt : 0;
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setProofUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const generateQuickReceipt = (channel: string) => {
+    setPaymentChannel(channel);
+    const generated = generateReceiptDataUrl('bdt_paid', {
+      amount: numAmount || currentRemaining,
+      sender: deal.customerName,
+      recipient: 'FastFx Settlement Account',
+      channel: `${channel} Transfer`,
+      ref: `${channel.substring(0, 3).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`,
+    });
+    setProofUrl(generated);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (numAmount <= 0) return;
+
+    const finalProof =
+      proofUrl ||
+      generateReceiptDataUrl('bdt_paid', {
+        amount: numAmount,
+        sender: deal.customerName,
+        recipient: 'FastFx Settlement Desk',
+        channel: `${paymentChannel} Transfer`,
+      });
+
+    onSubmit(deal.id, numAmount, finalProof, note.trim() || undefined);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div
+        className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <div>
+            <span className="text-[11px] font-bold tracking-wider text-blue-600 uppercase flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5" /> Customer Payment Submission
+            </span>
+            <h3 className="text-base font-bold text-slate-900">
+              Submit Payment Proof ({deal.dealNumber})
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Outstanding Balance Context */}
+          <div className="p-3.5 bg-slate-900 text-white rounded-xl flex items-center justify-between">
+            <div>
+              <span className="text-xs text-slate-400 block">Outstanding Balance Due</span>
+              <span className="text-xl font-bold text-amber-400 tabular-nums">
+                {formatBdt(currentRemaining)}
+              </span>
+            </div>
+            <div className="text-right text-xs text-slate-400">
+              <span>Total Expected: {formatBdt(deal.expectedBdtAmount)}</span>
+              <div className="text-emerald-400 font-medium">
+                Already Paid: {formatBdt(deal.paidAmount)}
+              </div>
+            </div>
+          </div>
+
+          {/* Amount Being Paid */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                Payment Amount (BDT) <span className="text-rose-500">*</span>
+              </label>
+              {currentRemaining > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setAmountBdt(currentRemaining)}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                >
+                  Pay Full Balance ({formatBdt(currentRemaining)})
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-base">
+                ৳
+              </span>
+              <input
+                type="number"
+                min="1"
+                step="any"
+                required
+                placeholder="50,000"
+                value={amountBdt}
+                onChange={(e) =>
+                  setAmountBdt(e.target.value === '' ? '' : parseFloat(e.target.value))
+                }
+                className="w-full pl-8 pr-3.5 py-2.5 bg-white text-base font-bold text-slate-900 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 tabular-nums"
+              />
+            </div>
+          </div>
+
+          {/* Screenshot Upload */}
+          <div>
+            <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider block mb-1.5">
+              Payment Screenshot / Receipt <span className="text-rose-500">*</span>
+            </label>
+
+            {proofUrl ? (
+              <div className="relative rounded-xl border border-slate-200 overflow-hidden bg-slate-900/5 group">
+                <img
+                  src={proofUrl}
+                  alt="Proof Preview"
+                  className="w-full h-44 object-contain bg-slate-950/40"
+                />
+                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <label className="px-3 py-1.5 bg-white text-slate-900 text-xs font-semibold rounded-lg shadow-md cursor-pointer hover:bg-slate-100">
+                    Change Receipt
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setProofUrl('')}
+                    className="px-3 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-lg shadow-md hover:bg-rose-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-slate-400 transition-colors bg-slate-50/40">
+                <ImageIcon className="w-7 h-7 mx-auto text-slate-400 mb-1" />
+                <p className="text-xs font-medium text-slate-700">
+                  Upload screenshot of your bKash, Nagad or Bank transfer slip
+                </p>
+                <p className="text-[11px] text-slate-400 mb-2.5">
+                  No transaction ID required—just screenshot &amp; amount
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <label className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg shadow-xs cursor-pointer hover:bg-slate-50 inline-flex items-center gap-1.5">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload Screenshot</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+
+                  <span className="text-xs text-slate-400">or template:</span>
+
+                  <button
+                    type="button"
+                    onClick={() => generateQuickReceipt('bKash')}
+                    className="px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 text-xs font-medium rounded-lg hover:bg-rose-100 transition-colors"
+                  >
+                    ⚡ bKash Slip
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => generateQuickReceipt('City Bank')}
+                    className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    ⚡ Bank Slip
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Optional Note */}
+          <div>
+            <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider block mb-1">
+              Payment Note (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Paid via bKash personal account"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full px-3 py-2 bg-white text-xs text-slate-800 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          <div className="p-3 bg-blue-50/80 border border-blue-200/60 rounded-xl text-xs text-blue-900 leading-relaxed">
+            <span className="font-semibold">Verification Step:</span> Once submitted, the business owner will review your payment screenshot. Upon approval, ৳{numAmount ? numAmount.toLocaleString() : '0'} will be instantly deducted from your due balance.
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-xl transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={numAmount <= 0}
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-sm flex items-center gap-2"
+            >
+              <span>Submit Payment Proof</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

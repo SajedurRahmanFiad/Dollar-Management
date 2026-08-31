@@ -106,7 +106,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             Exchange Operations Dashboard
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Real-time liquidity, ledger dues, and pending customer settlement verifications
+            Real-time liquidity, ledger dues, and pending client settlement verifications
           </p>
         </div>
 
@@ -210,7 +210,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-sm font-semibold text-slate-500">Proofs</span>
             </div>
             <span className="text-[11px] text-slate-500 font-medium">
-              +{pendingRequests.length} customer buy inquiries
+              +{pendingRequests.length} client buy inquiries
             </span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -387,7 +387,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                 <th className="py-3 px-5">Deal Number</th>
-                <th className="py-3 px-4">Customer</th>
+                <th className="py-3 px-4">Client</th>
                 <th className="py-3 px-4">USD Amount</th>
                 <th className="py-3 px-4">Rate</th>
                 <th className="py-3 px-4">Due Balance</th>

@@ -12,6 +12,7 @@ import {
   Wallet,
   Clock,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { useExchange } from '../../context/ExchangeContext';
 
@@ -33,6 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     activeCustomerId,
     customers,
     setSelectedDealId,
+    setSelectedCustomerId,
   } = useExchange();
 
   const currentCustomer =
@@ -95,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'customers' as const,
-      label: 'Customers',
+      label: 'Clients',
       icon: Users,
     },
     {
@@ -153,25 +155,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const activeNavList =
     activeRole === 'customer' ? customerNavItems : ownerNavItems;
 
+  const handleSelectTab = (itemId: any) => {
+    setSelectedDealId(null);
+    if (itemId === 'customers') {
+      setSelectedCustomerId(null);
+    }
+    setCurrentView(itemId);
+  };
+
   return (
-    <aside className="w-60 bg-white border-r border-slate-100 flex flex-col justify-between shrink-0 select-none">
-      <div>
+    <aside className="hidden lg:flex w-64 bg-white border-r border-slate-100 flex-col justify-between shrink-0 h-screen sticky top-0 select-none">
+      <div className="flex flex-col">
         {/* Brand Header */}
-        <div className="h-16 px-5 flex items-center gap-3 border-b border-slate-100">
-          <div
-            className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm text-white shadow-xs ${
-              activeRole === 'customer' ? 'bg-blue-600' : 'bg-slate-900'
-            }`}
-          >
-            $
-          </div>
-          <div>
-            <span className="font-extrabold text-xs text-slate-900 tracking-tight block">
-              FastFx Exchange
-            </span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              {activeRole === 'customer' ? 'Customer Portal' : 'Admin Console'}
-            </span>
+        <div className="h-16 px-5 flex items-center justify-between border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm text-white shadow-xs ${
+                activeRole === 'customer'
+                  ? 'bg-gradient-to-tr from-amber-500 to-amber-600'
+                  : 'bg-slate-900'
+              }`}
+            >
+              $
+            </div>
+            <div>
+              <span className="font-extrabold text-xs text-slate-900 tracking-tight block">
+                FastFx Exchange
+              </span>
+              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">
+                {activeRole === 'customer' ? 'Client Desk' : 'Admin Console'}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -179,7 +193,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="p-3 space-y-1">
           {activeNavList.map((item) => {
             const Icon = item.icon;
-            // When in customer mode, 'dashboard' or 'portal' maps to portal
             const isActive =
               currentView === item.id ||
               (activeRole === 'customer' &&
@@ -189,24 +202,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return (
               <button
                 key={item.id}
-                onClick={() => {
-                  setSelectedDealId(null);
-                  setCurrentView(item.id);
-                }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all relative ${
+                onClick={() => handleSelectTab(item.id)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all relative min-h-[42px] ${
                   isActive
-                    ? 'bg-blue-50/80 text-blue-900 font-bold'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                    : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900'
                 }`}
               >
-                {isActive && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 rounded-r-full" />
-                )}
-
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <Icon
                     className={`w-4 h-4 ${
-                      isActive ? 'text-blue-600' : 'text-slate-400'
+                      isActive ? 'text-amber-400' : 'text-slate-400'
                     }`}
                   />
                   <span>{item.label}</span>
@@ -214,7 +220,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {item.badge && (
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${item.badgeColor}`}
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      isActive ? 'bg-white/20 text-white' : item.badgeColor
+                    }`}
                   >
                     {item.badge}
                   </span>
@@ -226,45 +234,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Role Action Card at bottom of sidebar */}
-      <div className="p-3 border-t border-slate-100 bg-slate-50/50 m-2 rounded-2xl">
+      <div className="p-3 border-t border-slate-100 bg-slate-50/70 m-2 rounded-2xl">
         {activeRole === 'customer' ? (
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+            <div className="flex items-center gap-2.5 mb-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 text-white flex items-center justify-center font-black text-xs shadow-2xs">
                 {currentCustomer?.name?.charAt(0) || 'C'}
               </div>
               <div className="min-w-0 flex-1">
-                <span className="text-xs font-bold text-slate-800 truncate block">
-                  {currentCustomer?.name || 'Customer'}
-                </span>
-                <span className="text-[10px] text-slate-400 block truncate">
-                  {currentCustomer?.phone || ''}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-slate-900 truncate block">
+                    {currentCustomer?.name || 'Client'}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-amber-700 block truncate">
+                  Client Account
                 </span>
               </div>
             </div>
             <button
-              onClick={onOpenNewRequestModal}
-              className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
+              onClick={() => {
+                if (onOpenNewRequestModal) onOpenNewRequestModal();
+              }}
+              className="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 text-amber-400" />
               <span>Request Dollars</span>
             </button>
           </div>
         ) : (
           <div>
-            <div className="flex items-center justify-between text-xs mb-2">
+            <div className="flex items-center justify-between text-xs mb-2 px-1">
               <span className="font-bold text-slate-700 text-[11px]">
                 Exchange Status
               </span>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-full">
-                Active
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                Active Desk
               </span>
             </div>
             <button
-              onClick={onOpenNewDealModal}
-              className="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
+              onClick={() => {
+                if (onOpenNewDealModal) onOpenNewDealModal();
+              }}
+              className="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 text-amber-400" />
               <span>New Deal</span>
             </button>
           </div>

@@ -164,7 +164,7 @@ export const DealsView: React.FC<DealsViewProps> = ({
               onChange={(e) => setCustomerFilter(e.target.value)}
               className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl px-2.5 py-1.5 focus:outline-none"
             >
-              <option value="all">All Customers</option>
+              <option value="all">All Clients</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -199,84 +199,152 @@ export const DealsView: React.FC<DealsViewProps> = ({
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                  <th className="py-3 px-5">Deal Number</th>
-                  {activeRole === 'owner' && <th className="py-3 px-4">Customer</th>}
-                  <th className="py-3 px-4">USD Dispatched</th>
-                  <th className="py-3 px-4">Rate</th>
-                  <th className="py-3 px-4">Total (BDT)</th>
-                  <th className="py-3 px-4">Settled</th>
-                  <th className="py-3 px-4">Remaining Due</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-5 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredDeals.map((deal) => (
-                  <tr
-                    key={deal.id}
-                    onClick={() => onSelectDeal(deal.id)}
-                    className="hover:bg-slate-50/80 cursor-pointer transition-colors"
-                  >
-                    <td className="py-3.5 px-5 font-mono font-bold text-slate-900">
-                      {deal.dealNumber}
-                    </td>
+          <>
+            {/* Mobile Card List (< md) */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredDeals.map((deal) => (
+                <div
+                  key={deal.id}
+                  onClick={() => onSelectDeal(deal.id)}
+                  className="p-4 active:bg-slate-50 transition-colors flex flex-col gap-3 cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-black text-xs text-slate-900">
+                          {deal.dealNumber}
+                        </span>
+                        <StatusBadge status={deal.status} size="sm" />
+                      </div>
+                      {activeRole === 'owner' && (
+                        <p className="text-xs font-bold text-slate-700 mt-0.5">
+                          {deal.customerName}
+                        </p>
+                      )}
+                    </div>
 
-                    {activeRole === 'owner' && (
-                      <td className="py-3.5 px-4 font-bold text-slate-800">
-                        {deal.customerName}
-                      </td>
-                    )}
-
-                    <td className="py-3.5 px-4 font-black text-slate-900 font-mono tabular-nums">
-                      {formatUsd(deal.dollarAmount)}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-mono text-slate-600 tabular-nums">
-                      ৳{formatRate(deal.exchangeRate)}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-bold text-slate-900 tabular-nums">
-                      {formatBdt(deal.expectedBdtAmount)}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-bold text-emerald-700 tabular-nums">
-                      {formatBdt(deal.paidAmount)}
-                    </td>
-
-                    <td className="py-3.5 px-4 tabular-nums">
-                      <span
-                        className={`font-black ${
-                          deal.dueAmount > 0 ? 'text-amber-700' : 'text-slate-400'
-                        }`}
-                      >
-                        {formatBdt(deal.dueAmount)}
+                    <div className="text-right">
+                      <div className="text-sm font-black text-slate-900 font-mono">
+                        {formatUsd(deal.dollarAmount)} USD
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        @ ৳{formatRate(deal.exchangeRate)}
                       </span>
-                    </td>
+                    </div>
+                  </div>
 
-                    <td className="py-3.5 px-4">
-                      <StatusBadge status={deal.status} />
-                    </td>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100/80 text-xs">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block leading-tight uppercase font-bold">
+                          Settled
+                        </span>
+                        <span className="font-bold text-emerald-700 text-xs tabular-nums">
+                          {formatBdt(deal.paidAmount)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block leading-tight uppercase font-bold">
+                          Remaining Due
+                        </span>
+                        <span
+                          className={`font-black text-xs tabular-nums ${
+                            deal.dueAmount > 0 ? 'text-amber-700' : 'text-slate-400'
+                          }`}
+                        >
+                          {formatBdt(deal.dueAmount)}
+                        </span>
+                      </div>
+                    </div>
 
-                    <td className="py-3.5 px-5 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectDeal(deal.id);
-                        }}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-800"
-                      >
-                        Open &rarr;
-                      </button>
-                    </td>
+                    <span className="text-xs font-bold text-blue-600 flex items-center gap-0.5">
+                      Open <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                    <th className="py-3 px-5">Deal Number</th>
+                    {activeRole === 'owner' && <th className="py-3 px-4">Client</th>}
+                    <th className="py-3 px-4">USD Dispatched</th>
+                    <th className="py-3 px-4">Rate</th>
+                    <th className="py-3 px-4">Total (BDT)</th>
+                    <th className="py-3 px-4">Settled</th>
+                    <th className="py-3 px-4">Remaining Due</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-5 text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredDeals.map((deal) => (
+                    <tr
+                      key={deal.id}
+                      onClick={() => onSelectDeal(deal.id)}
+                      className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                    >
+                      <td className="py-3.5 px-5 font-mono font-bold text-slate-900">
+                        {deal.dealNumber}
+                      </td>
+
+                      {activeRole === 'owner' && (
+                        <td className="py-3.5 px-4 font-bold text-slate-800">
+                          {deal.customerName}
+                        </td>
+                      )}
+
+                      <td className="py-3.5 px-4 font-black text-slate-900 font-mono tabular-nums">
+                        {formatUsd(deal.dollarAmount)}
+                      </td>
+
+                      <td className="py-3.5 px-4 font-mono text-slate-600 tabular-nums">
+                        ৳{formatRate(deal.exchangeRate)}
+                      </td>
+
+                      <td className="py-3.5 px-4 font-bold text-slate-900 tabular-nums">
+                        {formatBdt(deal.expectedBdtAmount)}
+                      </td>
+
+                      <td className="py-3.5 px-4 font-bold text-emerald-700 tabular-nums">
+                        {formatBdt(deal.paidAmount)}
+                      </td>
+
+                      <td className="py-3.5 px-4 tabular-nums">
+                        <span
+                          className={`font-black ${
+                            deal.dueAmount > 0 ? 'text-amber-700' : 'text-slate-400'
+                          }`}
+                        >
+                          {formatBdt(deal.dueAmount)}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <StatusBadge status={deal.status} />
+                      </td>
+
+                      <td className="py-3.5 px-5 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectDeal(deal.id);
+                          }}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-800"
+                        >
+                          Open &rarr;
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

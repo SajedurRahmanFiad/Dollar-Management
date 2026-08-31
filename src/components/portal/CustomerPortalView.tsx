@@ -28,6 +28,7 @@ import {
 } from '../../utils/calculations';
 import { SubmitPaymentProofModal } from '../modals/SubmitPaymentProofModal';
 import { ImageViewerModal } from '../common/ImageViewerModal';
+import { ClientBadge } from '../common/ClientBadge';
 
 interface CustomerPortalViewProps {
   onSelectDeal: (dealId: string) => void;
@@ -100,33 +101,31 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12 animate-in fade-in duration-150">
-      {/* Customer Header & Quick Stats Bar */}
+      {/* Client Header & Quick Stats Bar */}
       <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-xl font-black shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-600 to-yellow-600 text-white flex items-center justify-center text-xl font-black shadow-xs">
             {currentCustomer.name.charAt(0)}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <h1 className="text-xl font-black text-slate-900">
                 {currentCustomer.name}
               </h1>
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                Customer
-              </span>
+              <ClientBadge tier="Private Client" size="md" variant="gold" />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-1">
               {currentCustomer.phone} {currentCustomer.email ? `• ${currentCustomer.email}` : ''}
             </p>
           </div>
         </div>
 
-        {/* Action Button: Only Customer Requests Dollars */}
+        {/* Action Button: Client Requests Dollars */}
         <div className="flex items-center gap-3 w-full md:w-auto">
           {onOpenNewRequestModal && (
             <button
               onClick={onOpenNewRequestModal}
-              className="w-full md:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
+              className="w-full md:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               <span>Request More Dollars</span>

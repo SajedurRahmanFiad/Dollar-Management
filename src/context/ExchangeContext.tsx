@@ -42,7 +42,6 @@ interface ExchangeContextType {
   createCustomer: (customerData: {
     name: string;
     phone: string;
-    email?: string;
     location?: string;
     notes?: string;
     preferredChannel?: 'WhatsApp' | 'Messenger' | 'Telegram' | 'Phone' | 'Platform';
@@ -201,7 +200,6 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const createCustomer = (customerData: {
     name: string;
     phone: string;
-    email?: string;
     location?: string;
     notes?: string;
     preferredChannel?: 'WhatsApp' | 'Messenger' | 'Telegram' | 'Phone' | 'Platform';
@@ -210,7 +208,6 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       id: `cust-${Date.now()}`,
       name: customerData.name.trim(),
       phone: customerData.phone.trim(),
-      email: customerData.email?.trim() || undefined,
       location: customerData.location?.trim() || undefined,
       notes: customerData.notes?.trim() || undefined,
       createdAt: new Date().toISOString(),

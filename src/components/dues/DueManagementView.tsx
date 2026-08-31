@@ -22,6 +22,7 @@ import {
 import { StatusBadge } from '../common/StatusBadge';
 import { SubmitPaymentProofModal } from '../modals/SubmitPaymentProofModal';
 import { ImageViewerModal } from '../common/ImageViewerModal';
+import { ClientBadge } from '../common/ClientBadge';
 
 interface DueManagementViewProps {
   onSelectDeal: (dealId: string) => void;
@@ -326,13 +327,13 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
       <div className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
         <div className="p-4 sm:p-5 border-b border-slate-100">
           <h2 className="text-sm font-black text-slate-900">
-            Customers with Unpaid Due Balances ({debtors.length})
+            Clients with Unpaid Balances ({debtors.length})
           </h2>
         </div>
 
         {debtors.length === 0 ? (
           <div className="p-12 text-center text-xs text-slate-400 font-medium">
-            All customer accounts are settled. No outstanding dues.
+            All client accounts are settled. No outstanding dues.
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -342,13 +343,14 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
                 className="p-4 sm:p-5 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <button
                       onClick={() => onSelectCustomer(debtor.customer.id)}
                       className="font-black text-xs text-slate-900 hover:text-blue-600 transition-colors"
                     >
                       {debtor.customer.name}
                     </button>
+                    <ClientBadge tier={debtor.summary.lifetimeValue > 300000 ? 'VIP Client' : 'Private Client'} size="sm" variant="gold" />
                     <span className="text-xs text-slate-400">
                       ({debtor.customer.phone})
                     </span>

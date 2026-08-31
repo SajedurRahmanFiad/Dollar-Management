@@ -74,12 +74,12 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
-            {activeRole === 'customer' ? 'My Dollar Inquiries' : 'Customer Inquiries & Intent'}
+            {activeRole === 'customer' ? 'My Dollar Inquiries' : 'Client Inquiries & Intent'}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             {activeRole === 'customer'
               ? 'Requests you placed for foreign currency exchange'
-              : 'Incoming dollar purchase requests placed by customers'}
+              : 'Incoming dollar purchase requests placed by private clients'}
           </p>
         </div>
 

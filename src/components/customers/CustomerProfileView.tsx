@@ -21,6 +21,7 @@ import { useExchange } from '../../context/ExchangeContext';
 import { StatusBadge } from '../common/StatusBadge';
 import { calculateCustomerSummary, formatBdt, formatRate, formatUsd } from '../../utils/calculations';
 import { NewDealModal } from '../modals/NewDealModal';
+import { ClientBadge } from '../common/ClientBadge';
 
 interface CustomerProfileViewProps {
   customerId: string;
@@ -81,10 +82,11 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
             <span>Back</span>
           </button>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                 {customer.name}
               </h1>
+              <ClientBadge size="sm" variant="gold" />
               {customer.preferredChannel && (
                 <span className="text-[11px] px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-medium">
                   {customer.preferredChannel}
@@ -96,12 +98,6 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
                 <Phone className="w-3.5 h-3.5 text-slate-400" />
                 {customer.phone}
               </span>
-              {customer.email && (
-                <span className="flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5 text-slate-400" />
-                  {customer.email}
-                </span>
-              )}
               {customer.location && (
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />

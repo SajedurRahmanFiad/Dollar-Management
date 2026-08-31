@@ -1,43 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { X, Send, Sparkles, DollarSign, Wallet, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Send, DollarSign, UserCheck } from 'lucide-react';
 import { useExchange } from '../../context/ExchangeContext';
-import { formatBdt, formatUsd } from '../../utils/calculations';
+import { formatBdt } from '../../utils/calculations';
 
 interface NewRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultCustomerName?: string;
-  defaultPhone?: string;
 }
 
 export const NewRequestModal: React.FC<NewRequestModalProps> = ({
   isOpen,
   onClose,
-  defaultCustomerName = '',
-  defaultPhone = '',
 }) => {
   const { customers, createRequest, activeRole, activeCustomerId } = useExchange();
 
   const currentCustomer =
     customers.find((c) => c.id === activeCustomerId) || customers[0];
 
-  const [customerName, setCustomerName] = useState(
-    defaultCustomerName || (activeRole === 'customer' ? currentCustomer?.name : '')
-  );
-  const [customerPhone, setCustomerPhone] = useState(
-    defaultPhone || (activeRole === 'customer' ? currentCustomer?.phone : '')
-  );
   const [requestedUsdAmount, setRequestedUsdAmount] = useState<number>(1000);
   const [targetRate, setTargetRate] = useState<number | ''>(122.5);
-  const [preferredChannel, setPreferredChannel] = useState('Wise');
   const [notes, setNotes] = useState('');
-
-  useEffect(() => {
-    if (activeRole === 'customer' && currentCustomer) {
-      setCustomerName(currentCustomer.name);
-      setCustomerPhone(currentCustomer.phone);
-    }
-  }, [activeRole, currentCustomer, isOpen]);
 
   if (!isOpen) return null;
 
@@ -46,15 +28,15 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (requestedUsdAmount <= 0 || !customerName.trim() || !customerPhone.trim()) return;
+    if (requestedUsdAmount <= 0) return;
 
     createRequest({
-      customerId: activeRole === 'customer' ? currentCustomer?.id : undefined,
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.trim(),
+      customerId: currentCustomer?.id,
+      customerName: currentCustomer?.name || 'Client',
+      customerPhone: currentCustomer?.phone || '',
       requestedUsdAmount,
       targetRate: typeof targetRate === 'number' ? targetRate : undefined,
-      preferredChannel,
+      preferredChannel: 'Wise / Bank Wire',
       notes: notes.trim() || undefined,
     });
 
@@ -62,23 +44,23 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
       <div
-        className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+        className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 max-h-[90vh] sm:max-h-[85vh] flex flex-col my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-xs">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-xs text-sm">
               $
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900">
+              <h3 className="text-sm sm:text-base font-black text-slate-900">
                 Request Dollar Purchase
               </h3>
-              <p className="text-xs text-slate-500">
-                Submit an inquiry to purchase USD from the exchange
+              <p className="text-[11px] sm:text-xs text-slate-500">
+                Submit an inquiry to buy USD from the exchange
               </p>
             </div>
           </div>
@@ -90,37 +72,29 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Inquirer Details */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                Your Name
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Full Name"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-xl focus:outline-none focus:border-blue-500"
-              />
+        {/* Form Body - Scrollable */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+          {/* Customer Profile Banner */}
+          {currentCustomer && (
+            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-amber-500 text-white font-black text-xs flex items-center justify-center shrink-0">
+                  {currentCustomer.name.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Requesting Client
+                  </span>
+                  <span className="text-xs font-black text-slate-900 truncate block">
+                    {currentCustomer.name}
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs font-mono font-bold text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shrink-0">
+                {currentCustomer.phone}
+              </span>
             </div>
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                Phone Number
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="017xxxxxxxx"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-xl focus:outline-none focus:border-blue-500"
-              />
-            </div>
-          </div>
+          )}
 
           {/* Amount presets */}
           <div>
@@ -161,43 +135,25 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
             </div>
           </div>
 
-          {/* Target Rate & Estimated BDT calculation */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                Target Rate (BDT/USD)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                placeholder="122.50"
-                value={targetRate}
-                onChange={(e) =>
-                  setTargetRate(e.target.value ? parseFloat(e.target.value) : '')
-                }
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-xs font-bold font-mono text-slate-800 rounded-xl focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                Transfer Channel
-              </label>
-              <select
-                value={preferredChannel}
-                onChange={(e) => setPreferredChannel(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-xl focus:outline-none focus:border-blue-500"
-              >
-                <option value="Wise">Wise Transfer</option>
-                <option value="Bank">Direct Bank Wire</option>
-                <option value="Payoneer">Payoneer</option>
-                <option value="Cash">Cash Handover</option>
-              </select>
-            </div>
+          {/* Target Rate */}
+          <div>
+            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              Target Rate (BDT / USD) (Optional)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              placeholder="122.50"
+              value={targetRate}
+              onChange={(e) =>
+                setTargetRate(e.target.value ? parseFloat(e.target.value) : '')
+              }
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-xs font-bold font-mono text-slate-800 rounded-xl focus:outline-none focus:border-blue-500"
+            />
           </div>
 
           {/* Live Estimate Card */}
-          <div className="p-3.5 bg-blue-50/70 border border-blue-200/70 rounded-xl flex items-center justify-between">
+          <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-center justify-between">
             <span className="text-xs font-bold text-blue-950">
               Estimated Total Payable:
             </span>
@@ -211,17 +167,17 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
             <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
               Special Instructions / Notes (Optional)
             </label>
-            <input
-              type="text"
-              placeholder="e.g., Need it by tomorrow noon, sending to Wise account"
+            <textarea
+              rows={2}
+              placeholder="e.g., Need funds urgently by tomorrow morning..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-xl focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 resize-none"
             />
           </div>
 
           {/* Submit */}
-          <div className="pt-2 flex items-center justify-end gap-2">
+          <div className="pt-2 flex items-center justify-end gap-2 shrink-0">
             <button
               type="button"
               onClick={onClose}

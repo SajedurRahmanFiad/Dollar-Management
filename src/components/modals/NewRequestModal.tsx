@@ -74,27 +74,6 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
 
         {/* Form Body - Scrollable */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
-          {/* Customer Profile Banner */}
-          {currentCustomer && (
-            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-amber-500 text-white font-black text-xs flex items-center justify-center shrink-0">
-                  {currentCustomer.name.charAt(0)}
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    Requesting Client
-                  </span>
-                  <span className="text-xs font-black text-slate-900 truncate block">
-                    {currentCustomer.name}
-                  </span>
-                </div>
-              </div>
-              <span className="text-xs font-mono font-bold text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shrink-0">
-                {currentCustomer.phone}
-              </span>
-            </div>
-          )}
 
           {/* Amount presets */}
           <div>
@@ -133,33 +112,6 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Target Rate */}
-          <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-              Target Rate (BDT / USD) (Optional)
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              placeholder="122.50"
-              value={targetRate}
-              onChange={(e) =>
-                setTargetRate(e.target.value ? parseFloat(e.target.value) : '')
-              }
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-xs font-bold font-mono text-slate-800 rounded-xl focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          {/* Live Estimate Card */}
-          <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-xl flex items-center justify-between">
-            <span className="text-xs font-bold text-blue-950">
-              Estimated Total Payable:
-            </span>
-            <span className="text-sm font-black text-blue-950 tabular-nums">
-              {formatBdt(estimatedBdt)}
-            </span>
           </div>
 
           {/* Notes */}

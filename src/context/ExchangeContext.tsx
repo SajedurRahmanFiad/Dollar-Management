@@ -481,7 +481,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       title: `Payment Proof Submitted (৳${amountBdt.toLocaleString()})`,
       description:
         note ||
-        `Customer uploaded payment screenshot for ৳${amountBdt.toLocaleString()}. Awaiting business owner verification.`,
+        `Customer uploaded payment screenshot for ৳${amountBdt.toLocaleString()}. Awaiting Ahmed Sourov verification.`,
       amountBdt,
       proofImageUrl: finalImage,
       proofType: 'bdt_paid',

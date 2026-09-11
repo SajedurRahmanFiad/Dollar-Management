@@ -78,9 +78,6 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
         {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div>
-            <span className="text-[10px] sm:text-[11px] font-bold tracking-wider text-blue-600 uppercase flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> Client Payment Submission
-            </span>
             <h3 className="text-sm sm:text-base font-black text-slate-900">
               Submit Payment Proof ({deal.dealNumber})
             </h3>
@@ -184,9 +181,6 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
                 <p className="text-xs font-medium text-slate-700">
                   Upload screenshot of your bKash, Nagad or Bank transfer slip
                 </p>
-                <p className="text-[11px] text-slate-400 mb-2.5">
-                  No transaction ID required—just screenshot &amp; amount
-                </p>
 
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <label className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg shadow-xs cursor-pointer hover:bg-slate-50 inline-flex items-center gap-1.5">
@@ -199,23 +193,6 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
                       onChange={handleFileUpload}
                     />
                   </label>
-
-                  <span className="text-xs text-slate-400">or template:</span>
-
-                  <button
-                    type="button"
-                    onClick={() => generateQuickReceipt('bKash')}
-                    className="px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 text-xs font-medium rounded-lg hover:bg-rose-100 transition-colors"
-                  >
-                    ⚡ bKash Slip
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => generateQuickReceipt('City Bank')}
-                    className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors"
-                  >
-                    ⚡ Bank Slip
-                  </button>
                 </div>
               </div>
             )}
@@ -236,7 +213,7 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
           </div>
 
           <div className="p-3 bg-blue-50/80 border border-blue-200/60 rounded-xl text-xs text-blue-900 leading-relaxed">
-            <span className="font-semibold">Verification Step:</span> Once submitted, the business owner will review your payment screenshot. Upon approval, ৳{numAmount ? numAmount.toLocaleString() : '0'} will be instantly deducted from your due balance.
+            <span className="font-semibold">Verification Step:</span> Once submitted, Ahmed Sourov will review your payment screenshot. Upon approval, ৳{numAmount ? numAmount.toLocaleString() : '0'} will be instantly deducted from your due balance.
           </div>
 
           {/* Buttons */}

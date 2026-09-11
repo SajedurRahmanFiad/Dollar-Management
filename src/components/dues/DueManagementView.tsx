@@ -33,7 +33,7 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
   onSelectDeal,
   onSelectCustomer,
 }) => {
-  const { customers, deals, activeRole, activeCustomerId } = useExchange();
+  const { customers, deals, activeRole, activeCustomerId, submitPaymentProof } = useExchange();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [activePaymentDeal, setActivePaymentDeal] = useState<
@@ -81,9 +81,6 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
             My Dues &amp; Payment Ledger
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Your outstanding BDT settlement balance and payment history
-          </p>
         </div>
 
         {/* Due Card */}
@@ -242,6 +239,7 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
               setIsSubmitModalOpen(false);
               setActivePaymentDeal(null);
             }}
+            onSubmit={(id, amount, url, note) => submitPaymentProof(id, amount, url, note)}
           />
         )}
 

@@ -128,7 +128,7 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
               className="w-full md:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              <span>Request More Dollars</span>
+              <span>Request Dollars</span>
             </button>
           )}
         </div>
@@ -531,6 +531,7 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             setIsSubmitPaymentModalOpen(false);
             setActivePaymentDeal(null);
           }}
+          onSubmit={(id, amount, url, note) => submitPaymentProof(id, amount, url, note)}
         />
       )}
 

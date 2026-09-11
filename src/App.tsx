@@ -30,6 +30,63 @@ const MainContent: React.FC = () => {
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
 
+  const syncRouteFromState = () => {
+    const routePath = selectedDealId
+      ? `/${selectedDealId}`
+      : selectedCustomerId
+      ? `/customer-${selectedCustomerId}`
+      : `/${currentView}`;
+
+    const currentPath = window.location.pathname || '/';
+    const normalizedCurrentPath = currentPath === '/' ? '/dashboard' : currentPath;
+
+    if (normalizedCurrentPath !== routePath) {
+      window.history.pushState({}, '', routePath);
+    }
+  };
+
+  const syncStateFromRoute = () => {
+    const path = window.location.pathname || '/';
+    const cleanPath = path === '/' ? '/dashboard' : path.replace(/\/+$/, '');
+
+    if (cleanPath.startsWith('/deal-')) {
+      const dealId = cleanPath.substring(1);
+      if (dealId) {
+        setSelectedDealId(dealId);
+        setSelectedCustomerId(null);
+        return;
+      }
+    }
+
+    if (cleanPath.startsWith('/customer-')) {
+      const customerId = cleanPath.replace('/customer-', '');
+      if (customerId) {
+        setSelectedCustomerId(customerId);
+        setSelectedDealId(null);
+        setCurrentView('customers');
+        return;
+      }
+    }
+
+    const nextView = cleanPath.slice(1) as
+      | 'dashboard'
+      | 'deals'
+      | 'customers'
+      | 'dues'
+      | 'requests'
+      | 'portal';
+
+    if (
+      ['dashboard', 'deals', 'customers', 'dues', 'requests', 'portal'].includes(
+        nextView
+      )
+    ) {
+      setCurrentView(nextView);
+      setSelectedDealId(null);
+      setSelectedCustomerId(null);
+    }
+  };
+
   const handleSelectDeal = (dealId: string) => {
     setSelectedDealId(dealId);
   };
@@ -38,6 +95,19 @@ const MainContent: React.FC = () => {
     setSelectedCustomerId(customerId);
     setCurrentView('customers');
   };
+
+  React.useEffect(() => {
+    syncRouteFromState();
+  }, [currentView, selectedDealId, selectedCustomerId]);
+
+  React.useEffect(() => {
+    syncStateFromRoute();
+    window.addEventListener('popstate', syncStateFromRoute);
+
+    return () => {
+      window.removeEventListener('popstate', syncStateFromRoute);
+    };
+  }, []);
 
   const renderActiveView = () => {
     // If a specific deal is open in workspace, prioritize workspace

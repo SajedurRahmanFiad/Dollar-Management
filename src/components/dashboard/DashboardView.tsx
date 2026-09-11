@@ -103,11 +103,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
-            Exchange Operations Dashboard
+            Dashboard
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Real-time liquidity, ledger dues, and pending client settlement verifications
-          </p>
         </div>
 
         <button

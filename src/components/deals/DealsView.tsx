@@ -103,13 +103,8 @@ export const DealsView: React.FC<DealsViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
-            {activeRole === 'customer' ? 'My Deals & Orders' : 'Deals Operations'}
+            {activeRole === 'customer' ? 'My Deals & Orders' : 'Deals'}
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {activeRole === 'customer'
-              ? `Tracking ${filteredDeals.length} orders on your account`
-              : `Managing ${deals.length} total exchange transactions`}
-          </p>
         </div>
 
         {activeRole === 'customer' ? (

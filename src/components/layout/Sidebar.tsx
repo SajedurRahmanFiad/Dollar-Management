@@ -90,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'deals' as const,
-      label: 'Deals Operations',
+      label: 'Deals',
       icon: ArrowLeftRight,
       badge: deals.length.toString(),
       badgeColor: 'bg-slate-100 text-slate-700',
@@ -180,7 +180,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div>
               <span className="font-extrabold text-xs text-slate-900 tracking-tight block">
-                FastFx Exchange
+                Ahmed Sourov Exchange
               </span>
               <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">
                 {activeRole === 'customer' ? 'Client Desk' : 'Admin Console'}
@@ -231,58 +231,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
         </nav>
-      </div>
-
-      {/* Role Action Card at bottom of sidebar */}
-      <div className="p-3 border-t border-slate-100 bg-slate-50/70 m-2 rounded-2xl">
-        {activeRole === 'customer' ? (
-          <div>
-            <div className="flex items-center gap-2.5 mb-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 text-white flex items-center justify-center font-black text-xs shadow-2xs">
-                {currentCustomer?.name?.charAt(0) || 'C'}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-slate-900 truncate block">
-                    {currentCustomer?.name || 'Client'}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-amber-700 block truncate">
-                  Client Account
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                if (onOpenNewRequestModal) onOpenNewRequestModal();
-              }}
-              className="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5 text-amber-400" />
-              <span>Request Dollars</span>
-            </button>
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-center justify-between text-xs mb-2 px-1">
-              <span className="font-bold text-slate-700 text-[11px]">
-                Exchange Status
-              </span>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                Active Desk
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                if (onOpenNewDealModal) onOpenNewDealModal();
-              }}
-              className="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5 text-amber-400" />
-              <span>New Deal</span>
-            </button>
-          </div>
-        )}
       </div>
     </aside>
   );

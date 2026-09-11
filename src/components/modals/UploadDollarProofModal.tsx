@@ -71,7 +71,7 @@ export const UploadDollarProofModal: React.FC<UploadDollarProofModalProps> = ({
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div>
             <span className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-              Business Owner Action
+              Ahmed Sourov Action
             </span>
             <h3 className="text-sm sm:text-base font-black text-slate-900">
               Upload Dollar Transfer Proof ({deal.dealNumber})
@@ -154,23 +154,6 @@ export const UploadDollarProofModal: React.FC<UploadDollarProofModalProps> = ({
                       onChange={handleFileUpload}
                     />
                   </label>
-                  
-                  <span className="text-xs text-slate-400">or template:</span>
-                  
-                  <button
-                    type="button"
-                    onClick={() => generateQuickProof('Binance Pay')}
-                    className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-medium rounded-lg hover:bg-amber-100 transition-colors"
-                  >
-                    ⚡ Binance Pay
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => generateQuickProof('Wise USD')}
-                    className="px-2.5 py-1 bg-sky-50 text-sky-800 border border-sky-200 text-xs font-medium rounded-lg hover:bg-sky-100 transition-colors"
-                  >
-                    ⚡ Wise USD
-                  </button>
                 </div>
               </div>
             )}

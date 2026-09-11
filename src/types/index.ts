@@ -81,6 +81,7 @@ export interface Customer {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   location?: string;
   notes?: string;
   createdAt: string;

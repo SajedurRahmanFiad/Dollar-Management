@@ -77,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
               $
             </div>
             <span className="font-extrabold text-xs text-slate-900 tracking-tight block sm:hidden">
-              FastFx
+              Ahmed Sourov
             </span>
           </div>
 
@@ -191,27 +191,6 @@ export const Header: React.FC<HeaderProps> = ({
               <Sparkles className="w-2.5 h-2.5" />
               <span>Client</span>
             </button>
-          </div>
-
-          {/* Primary Action Button (Hidden on smallest mobile to prevent wrap, since mobile bottom nav has it) */}
-          <div className="hidden sm:block">
-            {activeRole === 'customer' ? (
-              <button
-                onClick={onOpenNewRequestModal}
-                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 text-amber-400" />
-                <span>Request USD</span>
-              </button>
-            ) : (
-              <button
-                onClick={onOpenNewDealModal}
-                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 text-amber-400" />
-                <span>New Deal</span>
-              </button>
-            )}
           </div>
 
           {/* Reset Demo Data Button */}

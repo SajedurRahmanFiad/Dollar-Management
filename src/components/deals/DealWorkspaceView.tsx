@@ -133,11 +133,6 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
                 {deal.dealNumber}
               </h1>
               <StatusBadge status={deal.status} size="md" />
-              {deal.linkedRequestId && (
-                <span className="text-[11px] px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full font-medium">
-                  Linked to {deal.linkedRequestId}
-                </span>
-              )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
               <span>Customer:</span>
@@ -164,35 +159,10 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
             </p>
           </div>
         </div>
-
-        {/* Role Switcher Toolbar Banner for easy testing */}
-        <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-semibold text-slate-400 pl-2">Testing Perspective:</span>
-          <button
-            onClick={() => setActiveRole('owner')}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-              isOwner
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            👑 Owner View
-          </button>
-          <button
-            onClick={() => setActiveRole('customer')}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-              isCustomer
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            👤 Customer View ({deal.customerName.split(' ')[0]})
-          </button>
-        </div>
       </div>
 
       {/* Main Financial Workspace Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
         <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-100">
           <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
             Dollar Amount (USD)
@@ -248,35 +218,6 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
               : 'Outstanding balance'}
           </span>
         </div>
-
-        <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-100 col-span-2 md:col-span-1 flex flex-col justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Deal Journey Progress
-            </span>
-            <div className="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
-              <div
-                className={`h-full transition-all duration-500 ${
-                  isCompleted
-                    ? 'bg-emerald-500'
-                    : paymentProgressPercent > 0
-                    ? 'bg-blue-600'
-                    : 'bg-amber-500'
-                }`}
-                style={{ width: `${isCompleted ? 100 : Math.max(5, paymentProgressPercent)}%` }}
-              />
-            </div>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium mt-2 block">
-            {isCompleted
-              ? 'Transaction Completed'
-              : isAwaitingConfirmation
-              ? 'Awaiting Confirmation'
-              : isActiveDue
-              ? 'Active Collection Phase'
-              : 'Initial Stage'}
-          </span>
-        </div>
       </div>
 
       {/* Dynamic Action Callout Banners Depending on Status & Role */}
@@ -318,7 +259,7 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
                 Please Confirm Receipt of {formatUsd(deal.dollarAmount)}
               </h4>
               <p className="text-xs text-sky-800/90 mt-0.5">
-                The business owner has sent transfer proof. Verify your wallet and confirm receipt to activate your {formatBdt(deal.expectedBdtAmount)} due balance.
+                Ahmed Sourov has sent transfer proof. Verify your wallet and confirm receipt to activate your {formatBdt(deal.expectedBdtAmount)} due balance.
               </p>
             </div>
           </div>

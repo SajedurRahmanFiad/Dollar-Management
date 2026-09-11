@@ -336,13 +336,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
 
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         const rate = prompt(
                           `Enter exchange rate for ${req.customerName} ($${req.requestedUsdAmount}):`,
                           req.targetRate ? req.targetRate.toString() : '122.50'
                         );
                         if (rate && !isNaN(parseFloat(rate))) {
-                          const deal = convertRequestToDeal(req.id, parseFloat(rate));
+                          const deal = await convertRequestToDeal(req.id, parseFloat(rate));
                           if (deal) onSelectDeal(deal.id);
                         }
                       }}

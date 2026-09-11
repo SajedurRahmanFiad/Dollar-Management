@@ -51,7 +51,7 @@ export const NewDealModal: React.FC<NewDealModalProps> = ({
   const numRate = typeof exchangeRate === 'number' ? exchangeRate : 0;
   const calculatedBdt = Math.round(numUsd * numRate);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (numUsd <= 0 || numRate <= 0) return;
 
@@ -59,7 +59,7 @@ export const NewDealModal: React.FC<NewDealModalProps> = ({
 
     if (isCreatingNewCustomer) {
       if (!newCustomerName.trim() || !newCustomerPhone.trim()) return;
-      const created = createCustomer({
+      const created = await createCustomer({
         name: newCustomerName.trim(),
         phone: newCustomerPhone.trim(),
       });
@@ -68,7 +68,7 @@ export const NewDealModal: React.FC<NewDealModalProps> = ({
 
     if (!targetCustomerId) return;
 
-    const deal = createDeal({
+    const deal = await createDeal({
       customerId: targetCustomerId,
       dollarAmount: numUsd,
       exchangeRate: numRate,

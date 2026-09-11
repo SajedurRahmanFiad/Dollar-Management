@@ -208,13 +208,13 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
                   {activeRole === 'owner' && req.status !== 'converted' && (
                     <>
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           const rateInput = prompt(
                             `Lock in exchange rate for ${req.customerName} ($${req.requestedUsdAmount}):`,
                             req.targetRate ? req.targetRate.toString() : '122.50'
                           );
                           if (rateInput && !isNaN(parseFloat(rateInput))) {
-                            const newDeal = convertRequestToDeal(
+                            const newDeal = await convertRequestToDeal(
                               req.id,
                               parseFloat(rateInput)
                             );

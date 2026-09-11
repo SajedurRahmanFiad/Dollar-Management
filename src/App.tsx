@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { ExchangeProvider, useExchange } from './context/ExchangeContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoginPage } from './pages/LoginPage';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
@@ -16,6 +18,7 @@ import { NewCustomerModal } from './components/modals/NewCustomerModal';
 import { NewRequestModal } from './components/modals/NewRequestModal';
 
 const MainContent: React.FC = () => {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const {
     currentView,
     setCurrentView,
@@ -24,15 +27,31 @@ const MainContent: React.FC = () => {
     selectedCustomerId,
     setSelectedCustomerId,
     activeRole,
+    setActiveRole,
+    setActiveCustomerId,
   } = useExchange();
 
   const [isNewDealModalOpen, setIsNewDealModalOpen] = useState(false);
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
 
+  // Sync role from auth user
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === 'customer') {
+        setActiveRole('customer');
+        if (user.customerId) {
+          setActiveCustomerId(String(user.customerId));
+        }
+      } else {
+        setActiveRole('owner');
+      }
+    }
+  }, [user, setActiveRole, setActiveCustomerId]);
+
   const syncRouteFromState = () => {
     const routePath = selectedDealId
-      ? `/${selectedDealId}`
+      ? `/deal-${selectedDealId}`
       : selectedCustomerId
       ? `/customer-${selectedCustomerId}`
       : `/${currentView}`;
@@ -50,7 +69,7 @@ const MainContent: React.FC = () => {
     const cleanPath = path === '/' ? '/dashboard' : path.replace(/\/+$/, '');
 
     if (cleanPath.startsWith('/deal-')) {
-      const dealId = cleanPath.substring(1);
+      const dealId = cleanPath.replace('/deal-', '');
       if (dealId) {
         setSelectedDealId(dealId);
         setSelectedCustomerId(null);
@@ -109,8 +128,22 @@ const MainContent: React.FC = () => {
     };
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="h-screen w-full bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-slate-500 text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
   const renderActiveView = () => {
-    // If a specific deal is open in workspace, prioritize workspace
     if (selectedDealId) {
       return (
         <DealWorkspaceView
@@ -120,7 +153,6 @@ const MainContent: React.FC = () => {
       );
     }
 
-    // When customer is active, 'dashboard' or 'portal' renders customer's personal portal
     if (activeRole === 'customer') {
       switch (currentView) {
         case 'deals':
@@ -156,7 +188,6 @@ const MainContent: React.FC = () => {
       }
     }
 
-    // Owner role views
     switch (currentView) {
       case 'dashboard':
         return (
@@ -231,13 +262,11 @@ const MainContent: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full bg-slate-50 overflow-hidden font-sans text-slate-900 antialiased">
-      {/* Desktop Persistent Sidebar */}
       <Sidebar
         onOpenNewDealModal={() => setIsNewDealModalOpen(true)}
         onOpenNewRequestModal={() => setIsNewRequestModalOpen(true)}
       />
 
-      {/* Main Workspace Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <Header
           onOpenNewDealModal={() => setIsNewDealModalOpen(true)}
@@ -248,14 +277,12 @@ const MainContent: React.FC = () => {
           <div className="max-w-7xl mx-auto">{renderActiveView()}</div>
         </main>
 
-        {/* Mobile Bottom Navigation Bar */}
         <MobileBottomNav
           onOpenNewDealModal={() => setIsNewDealModalOpen(true)}
           onOpenNewRequestModal={() => setIsNewRequestModalOpen(true)}
         />
       </div>
 
-      {/* Global Modals */}
       <NewDealModal
         isOpen={isNewDealModalOpen}
         onClose={() => setIsNewDealModalOpen(false)}
@@ -276,8 +303,10 @@ const MainContent: React.FC = () => {
 
 export default function App() {
   return (
-    <ExchangeProvider>
-      <MainContent />
-    </ExchangeProvider>
+    <AuthProvider>
+      <ExchangeProvider>
+        <MainContent />
+      </ExchangeProvider>
+    </AuthProvider>
   );
 }

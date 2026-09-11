@@ -21,11 +21,11 @@ export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) return;
 
-    const customer = createCustomer({
+    const customer = await createCustomer({
       name: name.trim(),
       phone: phone.trim(),
       location: location.trim() || undefined,

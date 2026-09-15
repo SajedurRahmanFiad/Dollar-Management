@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   Clock,
   DollarSign,
-  Search,
   Phone,
   Send,
   MessageSquare,
@@ -41,7 +40,6 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
     activeRole,
     activeCustomerId,
     searchQuery,
-    setSearchQuery,
     submitPaymentProof,
   } = useExchange();
 
@@ -90,19 +88,10 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
 
     return (
       <div className="space-y-6 max-w-4xl mx-auto pb-10 animate-in fade-in duration-150">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
             My Dues &amp; Payment Ledger
           </h1>
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search my dues..."
-              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8 pr-3 text-xs text-slate-800 outline-none focus:border-slate-900"
-            />
-          </div>
         </div>
 
         {/* Due Card */}
@@ -298,9 +287,13 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
           unpaidDeals,
         };
       })
-        .filter((item) => item.summary.currentDue > 0)
-      .sort((a, b) => b.summary.currentDue - a.summary.currentDue);
-      }, [customers, deals, searchQuery]);
+        .filter(
+          (item) =>
+            item.summary.currentDue > 0 &&
+            (!searchQuery.trim() || item.unpaidDeals.length > 0)
+        )
+        .sort((a, b) => b.summary.currentDue - a.summary.currentDue);
+  }, [customers, deals, searchQuery]);
 
   const totalOutstanding = debtors.reduce(
     (sum, d) => sum + d.summary.currentDue,
@@ -314,19 +307,10 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
     <div className="space-y-6 max-w-7xl mx-auto pb-10 animate-in fade-in duration-150">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
             Due Ledger
           </h1>
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search clients or deals..."
-              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8 pr-3 text-xs text-slate-800 outline-none focus:border-slate-900"
-            />
-          </div>
         </div>
 
         <div className="bg-amber-50 border border-amber-200/80 rounded-2xl px-4 py-2.5 flex items-center gap-3">

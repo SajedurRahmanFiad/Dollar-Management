@@ -19,6 +19,32 @@ import { NewRequestModal } from './components/modals/NewRequestModal';
 import { ProfilePage } from './pages/ProfilePage';
 import { AppFooter } from './components/layout/AppFooter';
 
+const routeStorageKey = (role: 'owner' | 'customer') =>
+  `dollar-management:last-route:${role}`;
+
+const isRouteAllowedForRole = (path: string, role: 'owner' | 'customer') => {
+  if (path.startsWith('/deal-')) {
+    return path.length > '/deal-'.length;
+  }
+
+  if (path.startsWith('/customer-')) {
+    return role === 'owner' && path.length > '/customer-'.length;
+  }
+
+  const ownerViews = ['/dashboard', '/deals', '/customers', '/dues', '/requests', '/profile'];
+  const customerViews = ['/portal', '/deals', '/dues', '/requests', '/profile'];
+  return (role === 'owner' ? ownerViews : customerViews).includes(path);
+};
+
+const getStoredRoute = (role: 'owner' | 'customer') => {
+  try {
+    const storedRoute = sessionStorage.getItem(routeStorageKey(role));
+    return storedRoute && isRouteAllowedForRole(storedRoute, role) ? storedRoute : null;
+  } catch {
+    return null;
+  }
+};
+
 const MainContent: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const {
@@ -40,25 +66,13 @@ const MainContent: React.FC = () => {
   const isHydratingRoute = React.useRef(false);
   const mainContentRef = React.useRef<HTMLElement | null>(null);
 
-  // Sync role from auth user
-  React.useEffect(() => {
-    if (user) {
-      if (user.role === 'customer') {
-        setActiveRole('customer');
-        if (user.customerId) {
-          setActiveCustomerId(String(user.customerId));
-        }
-        if (window.location.pathname === '/' || window.location.pathname === '/dashboard') {
-          setCurrentView('portal');
-        }
-      } else {
-        setActiveRole('owner');
-        if (window.location.pathname === '/' || window.location.pathname === '/portal') {
-          setCurrentView('dashboard');
-        }
-      }
+  const saveRouteForRole = (routePath: string, role: 'owner' | 'customer') => {
+    try {
+      sessionStorage.setItem(routeStorageKey(role), routePath);
+    } catch {
+      // Session storage may be unavailable in private or restricted browser contexts.
     }
-  }, [user, setActiveRole, setActiveCustomerId, setCurrentView]);
+  };
 
   const syncRouteFromState = () => {
     const routePath = selectedDealId
@@ -73,10 +87,13 @@ const MainContent: React.FC = () => {
     if (normalizedCurrentPath !== routePath) {
       window.history.pushState({}, '', routePath);
     }
+
+    if (user?.role === 'customer' || user?.role === 'owner') {
+      saveRouteForRole(routePath, user.role);
+    }
   };
 
-  const syncStateFromRoute = () => {
-    const path = window.location.pathname || '/';
+  const syncStateFromRoute = (path = window.location.pathname || '/') => {
     const cleanPath = path === '/' ? '/dashboard' : path.replace(/\/+$/, '');
 
     if (cleanPath.startsWith('/deal-')) {
@@ -142,16 +159,52 @@ const MainContent: React.FC = () => {
     mainContentRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [currentView, selectedDealId, selectedCustomerId]);
 
+  // Restore the authenticated user's last page before applying role defaults.
   React.useEffect(() => {
+    if (!user) {
+      hasInitializedRoute.current = false;
+      return;
+    }
+    if (hasInitializedRoute.current) {
+      return;
+    }
+
+    const role = user.role === 'customer' ? 'customer' : 'owner';
+    setActiveRole(role);
+    if (role === 'customer' && user.customerId) {
+      setActiveCustomerId(String(user.customerId));
+    }
+
+    const currentPath = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+    const isRoleLandingPath =
+      currentPath === '/' ||
+      (role === 'customer' && currentPath === '/dashboard') ||
+      (role === 'owner' && currentPath === '/portal');
+    const currentPathAllowed = isRouteAllowedForRole(currentPath, role);
+    const storedRoute =
+      isRoleLandingPath || !currentPathAllowed ? getStoredRoute(role) : null;
+    const routePath =
+      storedRoute ||
+      (currentPathAllowed
+        ? currentPath
+        : role === 'customer'
+        ? '/portal'
+        : '/dashboard');
+
+    if (currentPath !== routePath) {
+      window.history.replaceState({}, '', routePath);
+    }
     isHydratingRoute.current = true;
-    syncStateFromRoute();
+    syncStateFromRoute(routePath);
+    saveRouteForRole(routePath, role);
     hasInitializedRoute.current = true;
-    window.addEventListener('popstate', syncStateFromRoute);
+    const handlePopState = () => syncStateFromRoute();
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
-      window.removeEventListener('popstate', syncStateFromRoute);
+      window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [user]);
 
   if (isLoading) {
     return (

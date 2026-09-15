@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, UserPlus, Phone, MapPin } from 'lucide-react';
+import { X, Phone, Building2 } from 'lucide-react';
 import { useExchange } from '../../context/ExchangeContext';
 
 interface NewCustomerModalProps {
@@ -15,9 +15,8 @@ export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [notes, setNotes] = useState('');
-  const [preferredChannel, setPreferredChannel] = useState<'WhatsApp' | 'Messenger' | 'Telegram' | 'Phone' | 'Platform'>('WhatsApp');
 
   if (!isOpen) return null;
 
@@ -28,9 +27,8 @@ export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
     const customer = await createCustomer({
       name: name.trim(),
       phone: phone.trim(),
-      location: location.trim() || undefined,
+      companyName: companyName.trim() || undefined,
       notes: notes.trim() || undefined,
-      preferredChannel,
     });
 
     onClose();
@@ -46,14 +44,9 @@ export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs text-sm">
-              <UserPlus className="w-4 h-4 text-amber-400" />
-            </div>
-            <div>
-              <h3 className="text-sm sm:text-base font-black text-slate-900">Onboard New Client</h3>
-              <p className="text-[11px] sm:text-xs text-slate-500">Create client relationship profile</p>
-            </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-black text-slate-900">Onboard New Client</h3>
+            <p className="text-[11px] sm:text-xs text-slate-500">Create client relationship profile</p>
           </div>
           <button
             onClick={onClose}
@@ -96,35 +89,18 @@ export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
             <div>
               <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                Preferred Channel
-              </label>
-              <select
-                value={preferredChannel}
-                onChange={(e) => setPreferredChannel(e.target.value as any)}
-                className="w-full px-3 py-2.5 bg-slate-50 text-xs font-bold text-slate-800 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-900"
-              >
-                <option value="WhatsApp">WhatsApp</option>
-                <option value="Messenger">Messenger</option>
-                <option value="Telegram">Telegram</option>
-                <option value="Phone">Phone Call</option>
-                <option value="Platform">Platform In-App</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                Location / City
+                Company Name (Optional)
               </label>
               <div className="relative">
-                <MapPin className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Building2 className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="e.g. Gulshan, Dhaka"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. Acme Trading Ltd."
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
                   className="w-full pl-8 pr-3 py-2.5 bg-slate-50 text-xs font-medium text-slate-800 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-900"
                 />
               </div>

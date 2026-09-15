@@ -11,8 +11,10 @@ import {
 } from 'lucide-react';
 import { useExchange } from '../../context/ExchangeContext';
 import { StatusBadge } from '../common/StatusBadge';
+import { Pagination } from '../common/Pagination';
 import { formatBdt, formatRate, formatUsd } from '../../utils/calculations';
 import { Deal, DealStatus } from '../../types';
+import { useUrlPagination } from '../../hooks/useUrlPagination';
 
 interface DealsViewProps {
   onSelectDeal: (dealId: string) => void;
@@ -93,6 +95,10 @@ export const DealsView: React.FC<DealsViewProps> = ({
       });
   }, [scopedDeals, searchQuery, statusFilter, customerFilter, sortBy, activeRole]);
 
+  const { currentPage, totalPages, pageStart, pageEnd, goToPage } =
+    useUrlPagination(filteredDeals.length);
+  const paginatedDeals = filteredDeals.slice(pageStart, pageEnd);
+
   // Summary counts
   const totalUsdInView = filteredDeals.reduce((sum, d) => sum + d.dollarAmount, 0);
   const totalDueInView = filteredDeals.reduce((sum, d) => sum + (d.dueAmount || 0), 0);
@@ -100,7 +106,7 @@ export const DealsView: React.FC<DealsViewProps> = ({
   return (
     <div className="space-y-5 animate-in fade-in duration-150">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
             {activeRole === 'customer' ? 'My Deals & Orders' : 'Deals'}
@@ -110,15 +116,15 @@ export const DealsView: React.FC<DealsViewProps> = ({
         {activeRole === 'customer' ? (
           <button
             onClick={() => setCurrentView('requests')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Request Dollars</span>
+            <span>Request Fund</span>
           </button>
         ) : (
           <button
             onClick={onOpenNewDealModal}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Deal</span>
@@ -196,26 +202,21 @@ export const DealsView: React.FC<DealsViewProps> = ({
         ) : (
           <>
             {/* Mobile Card List (< md) */}
-            <div className="md:hidden divide-y divide-slate-100">
-              {filteredDeals.map((deal) => (
+            <div className="md:hidden space-y-3 bg-slate-50">
+              {paginatedDeals.map((deal) => (
                 <div
                   key={deal.id}
                   onClick={() => onSelectDeal(deal.id)}
-                  className="p-4 active:bg-slate-50 transition-colors flex flex-col gap-3 cursor-pointer"
+                  className="p-4 bg-white border border-slate-100 rounded-xl shadow-xs active:bg-slate-50 transition-colors flex flex-col gap-3 cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-black text-xs text-slate-900">
-                          {deal.dealNumber}
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="font-black text-xs text-slate-900">
+                          {deal.customerName}
                         </span>
                         <StatusBadge status={deal.status} size="sm" />
                       </div>
-                      {activeRole === 'owner' && (
-                        <p className="text-xs font-bold text-slate-700 mt-0.5">
-                          {deal.customerName}
-                        </p>
-                      )}
                     </div>
 
                     <div className="text-right">
@@ -223,7 +224,7 @@ export const DealsView: React.FC<DealsViewProps> = ({
                         {formatUsd(deal.dollarAmount)} USD
                       </div>
                       <span className="text-[10px] text-slate-500 font-mono">
-                        @ ৳{formatRate(deal.exchangeRate)}
+                        Rate: {formatRate(deal.exchangeRate)}
                       </span>
                     </div>
                   </div>
@@ -277,7 +278,7 @@ export const DealsView: React.FC<DealsViewProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredDeals.map((deal) => (
+                  {paginatedDeals.map((deal) => (
                     <tr
                       key={deal.id}
                       onClick={() => onSelectDeal(deal.id)}
@@ -298,7 +299,7 @@ export const DealsView: React.FC<DealsViewProps> = ({
                       </td>
 
                       <td className="py-3.5 px-4 font-mono text-slate-600 tabular-nums">
-                        ৳{formatRate(deal.exchangeRate)}
+                        {formatRate(deal.exchangeRate)}
                       </td>
 
                       <td className="py-3.5 px-4 font-bold text-slate-900 tabular-nums">
@@ -329,7 +330,7 @@ export const DealsView: React.FC<DealsViewProps> = ({
                             e.stopPropagation();
                             onSelectDeal(deal.id);
                           }}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800"
+                          className="inline-flex items-center px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-colors"
                         >
                           Open &rarr;
                         </button>
@@ -339,6 +340,12 @@ export const DealsView: React.FC<DealsViewProps> = ({
                 </tbody>
               </table>
             </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredDeals.length}
+              onPageChange={goToPage}
+            />
           </>
         )}
       </div>

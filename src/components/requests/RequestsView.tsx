@@ -13,6 +13,8 @@ import {
 import { useExchange } from '../../context/ExchangeContext';
 import { formatBdt, formatRate, formatUsd } from '../../utils/calculations';
 import { DollarRequest } from '../../types';
+import { Pagination } from '../common/Pagination';
+import { useUrlPagination } from '../../hooks/useUrlPagination';
 
 interface RequestsViewProps {
   onSelectDeal: (dealId: string) => void;
@@ -25,6 +27,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
 }) => {
   const {
     requests,
+    deals,
     customers,
     activeRole,
     activeCustomerId,
@@ -68,13 +71,17 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
     });
   }, [scopedRequests, searchQuery, statusFilter]);
 
+  const { currentPage, totalPages, pageStart, pageEnd, goToPage } =
+    useUrlPagination(filteredRequests.length);
+  const paginatedRequests = filteredRequests.slice(pageStart, pageEnd);
+
   return (
     <div className="space-y-5 animate-in fade-in duration-150">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
-            {activeRole === 'customer' ? 'My Dollar Inquiries' : 'Client Inquiries & Intent'}
+            {activeRole === 'customer' ? 'My Fund Requests' : 'Fund Requests'}
           </h1>
         </div>
 
@@ -82,10 +89,10 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
         {activeRole === 'customer' && onOpenNewRequestModal && (
           <button
             onClick={onOpenNewRequestModal}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Request Dollars</span>
+            <span>Request Fund</span>
           </button>
         )}
       </div>
@@ -94,7 +101,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
       <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 overflow-x-auto">
           {[
-            { id: 'all', label: 'All Inquiries' },
+            { id: 'all', label: 'All' },
             { id: 'pending', label: 'Under Review' },
             { id: 'converted', label: 'Converted to Deal' },
             { id: 'rejected', label: 'Declined' },
@@ -114,7 +121,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
         </div>
 
         <div className="text-xs text-slate-500 font-semibold">
-          Showing {filteredRequests.length} inquiry/inquiries
+          Showing {filteredRequests.length} request/requests
         </div>
       </div>
 
@@ -125,27 +132,32 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
             <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-3">
               <Inbox className="w-6 h-6" />
             </div>
-            <h3 className="text-sm font-bold text-slate-700">No inquiries found</h3>
+            <h3 className="text-sm font-bold text-slate-700">No requests found</h3>
             <p className="text-xs text-slate-400 mt-1">
               {activeRole === 'customer'
-                ? 'You have not submitted any dollar inquiries yet.'
-                : 'No customer inquiries in this filter category.'}
+                ? 'You have not submitted any fund requests yet.'
+                : 'No client requests in this filter category.'}
             </p>
             {activeRole === 'customer' && onOpenNewRequestModal && (
               <button
                 onClick={onOpenNewRequestModal}
                 className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl"
               >
-                Request Dollars Now
+                Request Funds Now
               </button>
             )}
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {filteredRequests.map((req) => (
+          <div className="space-y-3 bg-slate-50 md:space-y-0 md:bg-white md:divide-y md:divide-slate-100">
+            {paginatedRequests.map((req) => {
+              const convertedDeal = req.convertedDealId
+                ? deals.find((deal) => deal.id === req.convertedDealId)
+                : undefined;
+
+              return (
               <div
                 key={req.id}
-                className="p-4 sm:p-5 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                className="p-4 bg-white border border-slate-100 rounded-xl shadow-xs hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 md:p-5 md:border-0 md:rounded-none md:shadow-none"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -175,23 +187,19 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
                     </span>
                   </div>
 
+                  {activeRole === 'owner' && (
+                    <div className="mt-1 text-xs font-bold text-slate-900">
+                      {req.customerName}
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mt-1 text-xs">
-                    {activeRole === 'owner' && (
-                      <span className="font-bold text-slate-900">
-                        {req.customerName} ({req.customerPhone})
-                      </span>
-                    )}
                     <span className="font-black text-blue-900 font-mono">
-                      {formatUsd(req.requestedUsdAmount)} USD
+                      {formatUsd(req.requestedUsdAmount)}
                     </span>
-                    {req.targetRate && (
-                      <span className="text-slate-500 font-mono">
-                        Target: ৳{req.targetRate}
-                      </span>
-                    )}
-                    {req.preferredChannel && (
+                    {convertedDeal && (
                       <span className="text-slate-400 text-[11px]">
-                        via {req.preferredChannel}
+                        Rate: {formatRate(convertedDeal.exchangeRate)}
                       </span>
                     )}
                   </div>
@@ -211,7 +219,7 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
                         onClick={async () => {
                           const rateInput = prompt(
                             `Lock in exchange rate for ${req.customerName} ($${req.requestedUsdAmount}):`,
-                            req.targetRate ? req.targetRate.toString() : '122.50'
+                            '122.50'
                           );
                           if (rateInput && !isNaN(parseFloat(rateInput))) {
                             const newDeal = await convertRequestToDeal(
@@ -250,9 +258,17 @@ export const RequestsView: React.FC<RequestsViewProps> = ({
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredRequests.length}
+          onPageChange={goToPage}
+        />
       </div>
     </div>
   );

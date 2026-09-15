@@ -52,7 +52,6 @@ export interface PaymentSubmission {
   reviewedAt?: string;
   reviewedBy?: string;
   note?: string;
-  declineReason?: string;
 }
 
 export interface Deal {
@@ -82,11 +81,10 @@ export interface Customer {
   name: string;
   phone: string;
   email?: string;
-  location?: string;
+  companyName?: string;
   notes?: string;
   createdAt: string;
   avatarColor?: string;
-  preferredChannel?: 'WhatsApp' | 'Messenger' | 'Telegram' | 'Phone' | 'Platform';
 }
 
 export interface CustomerFinancialSummary {
@@ -117,7 +115,6 @@ export interface DollarRequest {
   status: RequestStatus;
   createdAt: string;
   convertedDealId?: string;
-  preferredChannel?: string;
 }
 
 export type Request = DollarRequest;

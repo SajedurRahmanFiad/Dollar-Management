@@ -5,7 +5,7 @@ import {
   Plus,
   Phone,
   Mail,
-  MapPin,
+  Building2,
   Calendar,
   Clock,
   TrendingUp,
@@ -22,6 +22,8 @@ import { StatusBadge } from '../common/StatusBadge';
 import { calculateCustomerSummary, formatBdt, formatRate, formatUsd } from '../../utils/calculations';
 import { NewDealModal } from '../modals/NewDealModal';
 import { ClientBadge } from '../common/ClientBadge';
+import { Pagination } from '../common/Pagination';
+import { useUrlPagination } from '../../hooks/useUrlPagination';
 
 interface CustomerProfileViewProps {
   customerId: string;
@@ -40,6 +42,29 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
   const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'all' | 'payments' | 'timeline'>('active');
   const [isNewDealModalOpen, setIsNewDealModalOpen] = useState(false);
 
+  const customerDeals = customer
+    ? deals.filter((d) => d.customerId === customer.id)
+    : [];
+  const activeDeals = customerDeals.filter(
+    (d) => d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'awaiting_confirmation' || d.status === 'draft'
+  );
+  const completedDeals = customerDeals.filter((d) => d.status === 'completed');
+  const allPaymentEvents = customerDeals.flatMap((d) =>
+    d.timeline
+      .filter((e) => e.type === 'payment_proof_submitted' || e.type === 'payment_approved')
+      .map((e) => ({ ...e, dealNumber: d.dealNumber, dealId: d.id }))
+  ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const summary = customer ? calculateCustomerSummary(customer, deals) : null;
+  const dealsInView = activeTab === 'active'
+    ? activeDeals
+    : activeTab === 'completed'
+    ? completedDeals
+    : customerDeals;
+  const { currentPage: dealsPage, totalPages: dealsTotalPages, pageStart: dealsPageStart, pageEnd: dealsPageEnd, goToPage: goToDealsPage } =
+    useUrlPagination(dealsInView.length, 'dealsPage');
+  const { currentPage: paymentsPage, totalPages: paymentsTotalPages, pageStart: paymentsPageStart, pageEnd: paymentsPageEnd, goToPage: goToPaymentsPage } =
+    useUrlPagination(allPaymentEvents.length, 'paymentsPage');
+
   if (!customer) {
     return (
       <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
@@ -54,32 +79,20 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
     );
   }
 
-  const customerDeals = deals.filter((d) => d.customerId === customer.id);
-  const summary = calculateCustomerSummary(customer, deals);
-
-  const activeDeals = customerDeals.filter(
-    (d) => d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'awaiting_confirmation' || d.status === 'draft'
-  );
-  const completedDeals = customerDeals.filter((d) => d.status === 'completed');
-
-  // Extract all payment events
-  const allPaymentEvents = customerDeals.flatMap((d) =>
-    d.timeline
-      .filter((e) => e.type === 'payment_proof_submitted' || e.type === 'payment_approved')
-      .map((e) => ({ ...e, dealNumber: d.dealNumber, dealId: d.id }))
-  ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const visibleDeals = dealsInView.slice(dealsPageStart, dealsPageEnd);
+  const visiblePaymentEvents = allPaymentEvents.slice(paymentsPageStart, paymentsPageEnd);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12 animate-in fade-in duration-150">
       {/* Top Header & Back Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-xl transition-all shadow-xs flex items-center gap-1.5 text-xs font-semibold"
+            aria-label="Back to clients"
+            className="p-2 shrink-0 self-center bg-transparent hover:bg-slate-100 border border-transparent hover:border-slate-200 text-slate-600 rounded-xl transition-all flex items-center"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back</span>
+            <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
@@ -87,21 +100,16 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
                 {customer.name}
               </h1>
               <ClientBadge size="sm" variant="gold" />
-              {customer.preferredChannel && (
-                <span className="text-[11px] px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-medium">
-                  {customer.preferredChannel}
-                </span>
-              )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-3">
               <span className="flex items-center gap-1">
                 <Phone className="w-3.5 h-3.5 text-slate-400" />
                 {customer.phone}
               </span>
-              {customer.location && (
+              {customer.companyName && (
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  {customer.location}
+                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                  {customer.companyName}
                 </span>
               )}
             </p>
@@ -110,7 +118,7 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
 
         <button
           onClick={() => setIsNewDealModalOpen(true)}
-          className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2 self-start sm:self-auto"
+          className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>Create Deal for {customer.name.split(' ')[0]}</span>
@@ -281,24 +289,14 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">
-                {((activeTab === 'active'
-                  ? activeDeals
-                  : activeTab === 'completed'
-                  ? completedDeals
-                  : customerDeals
-                ).length === 0) ? (
+                {dealsInView.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="py-10 text-center text-slate-400">
                       No deals in this tab.
                     </td>
                   </tr>
                 ) : (
-                  (activeTab === 'active'
-                    ? activeDeals
-                    : activeTab === 'completed'
-                    ? completedDeals
-                    : customerDeals
-                  ).map((deal) => (
+                  visibleDeals.map((deal) => (
                     <tr
                       key={deal.id}
                       onClick={() => onSelectDeal(deal.id)}
@@ -339,7 +337,7 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
                         })}
                       </td>
                       <td className="py-4 px-5 text-right">
-                        <span className="text-xs font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1">
+                        <span className="inline-flex items-center px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-colors">
                           <span>Open</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </span>
@@ -349,6 +347,12 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
                 )}
               </tbody>
             </table>
+            <Pagination
+              currentPage={dealsPage}
+              totalPages={dealsTotalPages}
+              totalItems={dealsInView.length}
+              onPageChange={goToDealsPage}
+            />
           </div>
         )}
 
@@ -360,7 +364,7 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
                 No payment history recorded yet.
               </p>
             ) : (
-              allPaymentEvents.map((evt) => (
+              visiblePaymentEvents.map((evt) => (
                 <div
                   key={evt.id}
                   onClick={() => onSelectDeal(evt.dealId)}
@@ -402,6 +406,12 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
                 </div>
               ))
             )}
+            <Pagination
+              currentPage={paymentsPage}
+              totalPages={paymentsTotalPages}
+              totalItems={allPaymentEvents.length}
+              onPageChange={goToPaymentsPage}
+            />
           </div>
         )}
       </div>

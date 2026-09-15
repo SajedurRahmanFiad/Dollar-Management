@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/response.php';
+require_once __DIR__ . '/../helpers/mappers.php';
 
 class DashboardController {
     private PDO $db;
@@ -57,8 +58,7 @@ class DashboardController {
 
         foreach ($pendingPayments as &$deal) {
             $deal['timeline'] = $this->getTimeline((int)$deal['id']);
-            $deal['customerName'] = $deal['customer_name'];
-            $deal['customerPhone'] = $deal['customer_phone'];
+            $deal = mapDeal($deal);
         }
 
         // Pending requests
@@ -73,10 +73,7 @@ class DashboardController {
         $pendingRequests = $stmt->fetchAll();
 
         foreach ($pendingRequests as &$req) {
-            $req['customerName'] = $req['customer_name'];
-            $req['customerPhone'] = $req['customer_phone'];
-            $req['requestedUsdAmount'] = (float)$req['requested_usd_amount'];
-            $req['targetRate'] = $req['target_rate'] !== null ? (float)$req['target_rate'] : null;
+            $req = mapRequest($req);
         }
 
         jsonSuccess([
@@ -92,24 +89,6 @@ class DashboardController {
         $stmt->execute([$dealId]);
         $events = $stmt->fetchAll();
 
-        return array_map(function ($e) {
-            return [
-                'id' => (string)$e['id'],
-                'timestamp' => $e['created_at'],
-                'type' => $e['event_type'],
-                'actor' => $e['actor_role'],
-                'actorName' => $e['actor_name'],
-                'title' => $e['title'],
-                'description' => $e['description'],
-                'amountUsd' => $e['amount_usd'] !== null ? (float)$e['amount_usd'] : null,
-                'amountBdt' => $e['amount_bdt'] !== null ? (float)$e['amount_bdt'] : null,
-                'exchangeRate' => $e['exchange_rate'] !== null ? (float)$e['exchange_rate'] : null,
-                'proofImageUrl' => $e['proof_image_url'],
-                'proofType' => $e['proof_type'],
-                'proofStatus' => $e['proof_status'],
-                'paymentEventId' => $e['payment_event_id'],
-                'rejectionReason' => $e['rejection_reason'],
-            ];
-        }, $events);
+        return array_map('mapTimelineEvent', $events);
     }
 }

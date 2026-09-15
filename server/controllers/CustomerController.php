@@ -20,26 +20,37 @@ class CustomerController {
         $behavior = $_GET['behavior'] ?? null;
         $sort = $_GET['sort'] ?? 'name_asc';
 
-        $customers = $this->model->getAll($search, $behavior, $sort);
+        $customers = $this->model->getAllWithFinancialSummaries($search, $sort);
 
-        // Attach computed financial summary to each customer
         $result = array_map(function ($c) {
-            $summary = $this->model->getFinancialSummary((int)$c['id']);
-            return array_merge($c, [
-                'currentDue' => $summary['currentDue'],
-                'lifetimeValue' => $summary['lifetimeValue'],
-                'totalDollarsPurchased' => $summary['totalDollarsPurchased'],
-                'totalAmountPaid' => $summary['totalAmountPaid'],
-                'totalDealsCount' => $summary['totalDealsCount'],
-                'activeDealsCount' => $summary['activeDealsCount'],
-                'completedDealsCount' => $summary['completedDealsCount'],
-                'disputedDealsCount' => $summary['disputedDealsCount'],
-                'averageDealSizeUsd' => $summary['averageDealSizeUsd'],
-                'largestDealUsd' => $summary['largestDealUsd'],
-                'lastActivityDate' => $summary['lastActivityDate'],
-                'paymentBehavior' => $summary['paymentBehavior'],
-                'oldestUnpaidDealDays' => $summary['oldestUnpaidDealDays'],
-            ]);
+            $currentDue = (float)$c['summary_current_due'];
+            $totalDealsCount = (int)$c['summary_total_deals_count'];
+            $oldestUnpaidDealDays = (int)$c['summary_oldest_unpaid_deal_days'];
+            $paymentBehavior = 'New Customer';
+            if ($totalDealsCount > 1 && $oldestUnpaidDealDays >= 7) {
+                $paymentBehavior = 'Has Overdue Dues';
+            } elseif ($totalDealsCount > 1 && $currentDue > 0) {
+                $paymentBehavior = 'Moderate';
+            } elseif ($totalDealsCount > 1 && $currentDue <= 0) {
+                $paymentBehavior = 'Prompt & Reliable';
+            }
+
+            $summary = [
+                'currentDue' => $currentDue,
+                'lifetimeValue' => (float)$c['summary_lifetime_value'],
+                'totalDollarsPurchased' => (float)$c['summary_total_dollars_purchased'],
+                'totalAmountPaid' => (float)$c['summary_total_amount_paid'],
+                'totalDealsCount' => $totalDealsCount,
+                'activeDealsCount' => (int)$c['summary_active_deals_count'],
+                'completedDealsCount' => (int)$c['summary_completed_deals_count'],
+                'disputedDealsCount' => (int)$c['summary_disputed_deals_count'],
+                'averageDealSizeUsd' => (float)$c['summary_average_deal_size_usd'],
+                'largestDealUsd' => (float)$c['summary_largest_deal_usd'],
+                'lastActivityDate' => $c['summary_last_activity_date'],
+                'paymentBehavior' => $paymentBehavior,
+                'oldestUnpaidDealDays' => $oldestUnpaidDealDays,
+            ];
+            return array_merge(mapCustomer($c), $summary);
         }, $customers);
 
         jsonSuccess($result);
@@ -50,7 +61,7 @@ class CustomerController {
         if (!$customer) jsonError('Customer not found', 404);
 
         $summary = $this->model->getFinancialSummary($id);
-        jsonSuccess(array_merge($customer, $summary));
+        jsonSuccess(array_merge(mapCustomer($customer), $summary));
     }
 
     public function create(): void {
@@ -61,7 +72,7 @@ class CustomerController {
             'name' => sanitizeString($data['name']),
             'phone' => sanitizeString($data['phone']),
             'email' => $data['email'] ?? null,
-            'location' => $data['location'] ?? null,
+            'company_name' => $data['company_name'] ?? $data['companyName'] ?? null,
             'notes' => $data['notes'] ?? null,
             'preferred_channel' => $data['preferred_channel'] ?? $data['preferredChannel'] ?? 'WhatsApp',
             'avatar_color' => $data['avatar_color'] ?? 'bg-indigo-600',
@@ -78,7 +89,7 @@ class CustomerController {
             'badge_type' => 'info',
         ]);
 
-        jsonSuccess($customer, 'Customer created');
+        jsonSuccess(mapCustomer($customer), 'Customer created');
     }
 
     public function update(int $id): void {
@@ -87,7 +98,7 @@ class CustomerController {
 
         $data = getJsonInput();
         $updates = [];
-        foreach (['name', 'phone', 'email', 'location', 'notes', 'preferred_channel', 'avatar_color'] as $field) {
+        foreach (['name', 'phone', 'email', 'company_name', 'notes', 'preferred_channel', 'avatar_color'] as $field) {
             if (array_key_exists($field, $data)) {
                 $updates[$field] = $data[$field];
             }
@@ -96,13 +107,16 @@ class CustomerController {
         if (array_key_exists('preferredChannel', $data)) {
             $updates['preferred_channel'] = $data['preferredChannel'];
         }
+        if (array_key_exists('companyName', $data)) {
+            $updates['company_name'] = $data['companyName'];
+        }
 
         if (!empty($updates)) {
             $this->model->update($id, $updates);
         }
 
         $customer = $this->model->getById($id);
-        jsonSuccess($customer, 'Customer updated');
+        jsonSuccess(mapCustomer($customer), 'Customer updated');
     }
 
     public function summary(int $id): void {

@@ -6,7 +6,6 @@ import {
   AlertCircle,
   Inbox,
   UserCheck,
-  DollarSign,
   Plus,
   Receipt,
   Wallet,
@@ -110,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'requests' as const,
-      label: 'Buy Inquiries',
+      label: 'Requests',
       icon: Inbox,
       badge: ownerNewRequests > 0 ? `${ownerNewRequests} New` : undefined,
       badgeColor: 'bg-blue-100 text-blue-800',
@@ -130,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'deals' as const,
-      label: 'My Deals & Orders',
+      label: 'My Deals',
       icon: ArrowLeftRight,
       badge: customerDeals.length.toString(),
       badgeColor: 'bg-slate-100 text-slate-700',
@@ -145,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'requests' as const,
-      label: 'My Inquiries',
+      label: 'My Requests',
       icon: Inbox,
       badge: customerInquiries > 0 ? `${customerInquiries}` : undefined,
       badgeColor: 'bg-blue-100 text-blue-800',
@@ -168,25 +167,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex flex-col">
         {/* Brand Header */}
         <div className="h-16 px-5 flex items-center justify-between border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm text-white shadow-xs ${
-                activeRole === 'customer'
-                  ? 'bg-gradient-to-tr from-amber-500 to-amber-600'
-                  : 'bg-slate-900'
-              }`}
-            >
-              $
-            </div>
-            <div>
-              <span className="font-extrabold text-xs text-slate-900 tracking-tight block">
-                Ahmed Sourov Exchange
-              </span>
-              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">
-                {activeRole === 'customer' ? 'Client Desk' : 'Admin Console'}
-              </span>
-            </div>
-          </div>
+          <img
+            src="/uploads/logoPNGFIT.png"
+            alt="Fundify"
+            className="h-10 w-auto max-w-full object-contain"
+          />
         </div>
 
         {/* Navigation Items */}

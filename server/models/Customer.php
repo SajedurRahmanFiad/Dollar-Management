@@ -16,7 +16,7 @@ class CustomerModel {
         $params = [];
 
         if ($search) {
-            $conditions[] = '(name LIKE ? OR phone LIKE ? OR location LIKE ?)';
+            $conditions[] = '(name LIKE ? OR phone LIKE ? OR company_name LIKE ?)';
             $params[] = "%$search%";
             $params[] = "%$search%";
             $params[] = "%$search%";
@@ -33,6 +33,57 @@ class CustomerModel {
         return $stmt->fetchAll();
     }
 
+    public function getAllWithFinancialSummaries(?string $search = null, string $sort = 'name_asc'): array {
+        $sql = 'SELECT c.*,
+                    COALESCE(s.current_due, 0) AS summary_current_due,
+                    COALESCE(s.lifetime_value, 0) AS summary_lifetime_value,
+                    COALESCE(s.total_dollars_purchased, 0) AS summary_total_dollars_purchased,
+                    COALESCE(s.total_amount_paid, 0) AS summary_total_amount_paid,
+                    COALESCE(s.total_deals_count, 0) AS summary_total_deals_count,
+                    COALESCE(s.active_deals_count, 0) AS summary_active_deals_count,
+                    COALESCE(s.completed_deals_count, 0) AS summary_completed_deals_count,
+                    COALESCE(s.disputed_deals_count, 0) AS summary_disputed_deals_count,
+                    COALESCE(s.average_deal_size_usd, 0) AS summary_average_deal_size_usd,
+                    COALESCE(s.largest_deal_usd, 0) AS summary_largest_deal_usd,
+                    s.last_activity_date AS summary_last_activity_date,
+                    COALESCE(s.oldest_unpaid_deal_days, 0) AS summary_oldest_unpaid_deal_days
+                FROM customers c
+                LEFT JOIN (
+                    SELECT customer_id,
+                        SUM(due_amount) AS current_due,
+                        SUM(CASE WHEN status IN (\'active_due\', \'partially_paid\', \'awaiting_confirmation\', \'completed\') THEN expected_bdt_amount ELSE 0 END) AS lifetime_value,
+                        SUM(dollar_amount) AS total_dollars_purchased,
+                        SUM(paid_amount) AS total_amount_paid,
+                        COUNT(*) AS total_deals_count,
+                        SUM(status IN (\'active_due\', \'partially_paid\', \'awaiting_confirmation\')) AS active_deals_count,
+                        SUM(status = \'completed\') AS completed_deals_count,
+                        SUM(status = \'disputed\') AS disputed_deals_count,
+                        AVG(dollar_amount) AS average_deal_size_usd,
+                        MAX(dollar_amount) AS largest_deal_usd,
+                        MAX(COALESCE(completed_at, created_at)) AS last_activity_date,
+                        MAX(CASE WHEN status IN (\'active_due\', \'partially_paid\') AND due_amount > 0
+                            THEN DATEDIFF(CURRENT_TIMESTAMP, COALESCE(confirmed_at, created_at)) ELSE 0 END) AS oldest_unpaid_deal_days
+                    FROM deals
+                    GROUP BY customer_id
+                ) s ON s.customer_id = c.id';
+        $conditions = [];
+        $params = [];
+
+        if ($search) {
+            $conditions[] = '(c.name LIKE ? OR c.phone LIKE ? OR c.company_name LIKE ?)';
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        if ($conditions) $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        $sql .= ' ORDER BY ' . ($sort === 'name_asc' ? 'c.name ASC' : 'c.created_at DESC');
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
     public function getById(int $id): ?array {
         $stmt = $this->db->prepare('SELECT * FROM customers WHERE id = ?');
         $stmt->execute([$id]);
@@ -41,14 +92,14 @@ class CustomerModel {
 
     public function create(array $data): int {
         $stmt = $this->db->prepare(
-            'INSERT INTO customers (name, phone, email, location, notes, preferred_channel, avatar_color)
+            'INSERT INTO customers (name, phone, email, company_name, notes, preferred_channel, avatar_color)
              VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $data['name'],
             $data['phone'],
             $data['email'] ?? null,
-            $data['location'] ?? null,
+            $data['company_name'] ?? null,
             $data['notes'] ?? null,
             $data['preferred_channel'] ?? 'WhatsApp',
             $data['avatar_color'] ?? 'bg-indigo-600',
@@ -60,7 +111,7 @@ class CustomerModel {
         $fields = [];
         $params = [];
 
-        foreach (['name', 'phone', 'email', 'location', 'notes', 'preferred_channel', 'avatar_color'] as $field) {
+        foreach (['name', 'phone', 'email', 'company_name', 'notes', 'preferred_channel', 'avatar_color'] as $field) {
             if (array_key_exists($field, $data)) {
                 $fields[] = "$field = ?";
                 $params[] = $data[$field];

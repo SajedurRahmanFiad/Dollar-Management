@@ -82,7 +82,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       },
       {
         id: 'deals',
-        label: 'Orders',
+        label: 'Deals',
         icon: ArrowLeftRight,
         badge: customerDeals.length > 0 ? customerDeals.length : undefined,
       },
@@ -95,7 +95,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       },
       {
         id: 'requests',
-        label: 'Inquiries',
+        label: 'Requests',
         icon: Inbox,
       },
     ];
@@ -113,6 +113,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               key={tab.id}
               onClick={() => handleNavClick(tab.id)}
               className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all relative min-h-[48px] ${
+                tab.id === 'dues'
+                  ? 'order-4'
+                  : tab.id === 'requests'
+                  ? 'order-5'
+                  : ''
+              } ${
                 isActive
                   ? 'text-amber-600 font-bold'
                   : 'text-slate-500 hover:text-slate-900 font-medium'
@@ -146,12 +152,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         {onOpenNewRequestModal && (
           <button
             onClick={onOpenNewRequestModal}
-            aria-label="Request Dollars"
-            className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-amber-900 bg-amber-100/90 active:bg-amber-200 min-h-[48px] transition-all"
+            aria-label="Request Fund"
+            className="order-3 flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl text-amber-900 bg-amber-100/90 active:bg-amber-200 min-h-[48px] transition-all"
           >
             <Plus className="w-5 h-5 text-amber-700" />
             <span className="text-[10px] font-black text-amber-800 tracking-tight whitespace-nowrap">
-              Buy USD
+              Request
             </span>
           </button>
         )}
@@ -187,7 +193,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     },
     {
       id: 'requests',
-      label: 'Inquiries',
+      label: 'Requests',
       icon: Inbox,
       badge: ownerNewRequests > 0 ? ownerNewRequests : undefined,
     },

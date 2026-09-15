@@ -46,9 +46,8 @@ interface ExchangeContextType {
   createCustomer: (customerData: {
     name: string;
     phone: string;
-    location?: string;
+    companyName?: string;
     notes?: string;
-    preferredChannel?: 'WhatsApp' | 'Messenger' | 'Telegram' | 'Phone' | 'Platform';
   }) => Promise<Customer>;
   updateCustomer: (id: string, updates: Partial<Customer>) => Promise<void>;
 
@@ -60,7 +59,6 @@ interface ExchangeContextType {
     requestedUsdAmount: number;
     targetRate?: number;
     notes?: string;
-    preferredChannel?: string;
   }) => Promise<DollarRequest>;
   convertRequestToDeal: (requestId: string, exchangeRate: number) => Promise<Deal | null>;
   rejectRequest: (requestId: string) => Promise<void>;
@@ -132,16 +130,14 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const createCustomer = useCallback(async (customerData: {
     name: string;
     phone: string;
-    location?: string;
+    companyName?: string;
     notes?: string;
-    preferredChannel?: 'WhatsApp' | 'Messenger' | 'Telegram' | 'Phone' | 'Platform';
   }): Promise<Customer> => {
     const newCust = await customerService.create({
       name: customerData.name,
       phone: customerData.phone,
-      location: customerData.location,
+      companyName: customerData.companyName,
       notes: customerData.notes,
-      preferredChannel: customerData.preferredChannel,
     });
     setCustomers((prev) => [newCust, ...prev]);
     return newCust;
@@ -255,7 +251,6 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     requestedUsdAmount: number;
     targetRate?: number;
     notes?: string;
-    preferredChannel?: string;
   }): Promise<DollarRequest> => {
     const newReq = await requestService.create({
       customerId: data.customerId ? Number(data.customerId) : undefined,
@@ -264,7 +259,6 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       requestedUsdAmount: data.requestedUsdAmount,
       targetRate: data.targetRate,
       notes: data.notes,
-      preferredChannel: data.preferredChannel,
     });
 
     const [freshRequests, freshCustomers] = await Promise.all([
@@ -280,12 +274,14 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const convertRequestToDeal = useCallback(async (requestId: string, exchangeRate: number): Promise<Deal | null> => {
     try {
       const deal = await requestService.convert(Number(requestId), exchangeRate);
-      const [freshDeals, freshRequests] = await Promise.all([
+      const [freshDeals, freshRequests, freshActivities] = await Promise.all([
         dealService.getAll(),
         requestService.getAll(),
+        activityService.getAll(),
       ]);
       setDeals(freshDeals);
       setRequests(freshRequests);
+      setActivities(freshActivities);
       return deal;
     } catch {
       return null;

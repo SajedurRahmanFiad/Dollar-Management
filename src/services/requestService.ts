@@ -19,7 +19,6 @@ export const requestService = {
     requestedUsdAmount: number;
     targetRate?: number;
     notes?: string;
-    preferredChannel?: string;
   }): Promise<DollarRequest> {
     const res = await api.post<{ data: DollarRequest }>('/requests', data);
     return res.data;

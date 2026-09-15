@@ -5,6 +5,7 @@ require_once __DIR__ . '/config/cors.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/helpers/response.php';
 require_once __DIR__ . '/helpers/auth_helper.php';
+require_once __DIR__ . '/helpers/mappers.php';
 
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/CustomerController.php';
@@ -105,9 +106,10 @@ route('POST', '/api/upload/proof', fn() => (new UploadController())->upload());
 // ========================
 // SERVE STATIC PROOF FILES
 // ========================
-if (preg_match('#^/server/uploads/proofs/(.+)$#', $uri, $m)) {
-    $file = __DIR__ . '/uploads/proofs/' . $m[1];
-    if (file_exists($file)) {
+if (preg_match('#^/uploads/proofs/([0-9]+)/(?:([^/]+))$#', $uri, $m)) {
+    $proofRoot = realpath(__DIR__ . '/uploads/proofs');
+    $file = $proofRoot ? realpath($proofRoot . '/' . $m[1] . '/' . $m[2]) : false;
+    if ($file && str_starts_with($file, $proofRoot . DIRECTORY_SEPARATOR) && is_file($file)) {
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
         $mime = match($ext) {
             'jpg', 'jpeg' => 'image/jpeg',

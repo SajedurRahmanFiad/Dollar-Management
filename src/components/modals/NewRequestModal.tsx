@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { X, Send, DollarSign, UserCheck } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { useExchange } from '../../context/ExchangeContext';
-import { formatBdt } from '../../utils/calculations';
 
 interface NewRequestModalProps {
   isOpen: boolean;
@@ -12,19 +11,15 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { customers, createRequest, activeRole, activeCustomerId } = useExchange();
+  const { customers, createRequest, activeCustomerId } = useExchange();
 
   const currentCustomer =
     customers.find((c) => c.id === activeCustomerId) || customers[0];
 
   const [requestedUsdAmount, setRequestedUsdAmount] = useState<number>(1000);
-  const [targetRate, setTargetRate] = useState<number | ''>(122.5);
   const [notes, setNotes] = useState('');
 
   if (!isOpen) return null;
-
-  const estimatedBdt =
-    requestedUsdAmount * (typeof targetRate === 'number' ? targetRate : 122.5);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +30,6 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
       customerName: currentCustomer?.name || 'Client',
       customerPhone: currentCustomer?.phone || '',
       requestedUsdAmount,
-      targetRate: typeof targetRate === 'number' ? targetRate : undefined,
-      preferredChannel: 'Wise / Bank Wire',
       notes: notes.trim() || undefined,
     });
 
@@ -51,17 +44,11 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-xs text-sm">
-              $
-            </div>
+          <div>
             <div>
               <h3 className="text-sm sm:text-base font-black text-slate-900">
-                Request Dollar Purchase
+                Request Fund
               </h3>
-              <p className="text-[11px] sm:text-xs text-slate-500">
-                Submit an inquiry to buy USD from the exchange
-              </p>
             </div>
           </div>
           <button
@@ -86,8 +73,8 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
               </span>
               <input
                 type="number"
-                min="10"
-                step="50"
+                min="0.01"
+                step="any"
                 required
                 value={requestedUsdAmount}
                 onChange={(e) => setRequestedUsdAmount(parseFloat(e.target.value) || 0)}
@@ -97,7 +84,7 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
 
             {/* Quick Presets */}
             <div className="grid grid-cols-4 gap-2">
-              {[500, 1000, 2500, 5000].map((amt) => (
+              {[100, 200, 300, 500].map((amt) => (
                 <button
                   type="button"
                   key={amt}
@@ -139,10 +126,10 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>Submit Inquiry</span>
+              <span>Request</span>
             </button>
           </div>
         </form>

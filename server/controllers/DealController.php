@@ -31,12 +31,12 @@ class DealController {
 
         $deals = $this->dealModel->getAll($status, $customerId, $search, $sort, $page, $limit);
 
-        // Attach timeline to each deal
-        $result = array_map(function ($deal) {
-            $deal['timeline'] = $this->dealModel->getTimeline((int)$deal['id']);
-            $deal['customerName'] = $deal['customer_name'];
-            $deal['customerPhone'] = $deal['customer_phone'];
-            return $deal;
+        $timelines = $this->dealModel->getTimelinesForDeals(
+            array_map(static fn(array $deal): int => (int)$deal['id'], $deals)
+        );
+        $result = array_map(static function (array $deal) use ($timelines): array {
+            $deal['timeline'] = $timelines[(string)$deal['id']] ?? [];
+            return mapDeal($deal);
         }, $deals);
 
         jsonSuccess($result);
@@ -46,15 +46,8 @@ class DealController {
         $deal = $this->dealModel->getById($id);
         if (!$deal) jsonError('Deal not found', 404);
 
-        $deal['customerName'] = $deal['customer_name'];
-        $deal['customerPhone'] = $deal['customer_phone'];
-
-        // Map timeline fields to camelCase
-        $deal['timeline'] = array_map(function ($evt) {
-            return $this->mapTimelineEvent($evt);
-        }, $deal['timeline']);
-
-        jsonSuccess($deal);
+        $deal['timeline'] = $this->dealModel->getTimeline($id);
+        jsonSuccess(mapDeal($deal));
     }
 
     public function create(): void {
@@ -85,7 +78,7 @@ class DealController {
             'deal_id' => $dealId,
             'event_type' => 'deal_created',
             'actor_role' => 'owner',
-            'actor_name' => 'Business Owner',
+            'actor_name' => 'Ahmed Sourov',
             'title' => isset($data['linkedRequestId'])
                 ? "Deal Created from Request ($dealNumber)"
                 : "Deal Created ($dealNumber)",
@@ -118,11 +111,9 @@ class DealController {
         ]);
 
         $deal = $this->dealModel->getById($dealId);
-        $deal['customerName'] = $customer['name'];
-        $deal['customerPhone'] = $customer['phone'];
-        $deal['timeline'] = array_map(fn($e) => $this->mapTimelineEvent($e), $this->dealModel->getTimeline($dealId));
+        $deal['timeline'] = $this->dealModel->getTimeline($dealId);
 
-        jsonSuccess($deal, 'Deal created');
+        jsonSuccess(mapDeal($deal), 'Deal created');
     }
 
     public function uploadProof(int $id): void {
@@ -139,9 +130,9 @@ class DealController {
             'deal_id' => $id,
             'event_type' => 'dollar_proof_uploaded',
             'actor_role' => 'owner',
-            'actor_name' => 'Business Owner',
+            'actor_name' => 'Ahmed Sourov',
             'title' => 'Dollar Transfer Proof Sent',
-            'description' => $note ?: "Sent \${$deal['dollar_amount']} to customer wallet. Screenshot attached. Waiting for customer confirmation.",
+            'description' => $note ?: "Sent \${$deal['dollar_amount']} to your wallet. Waiting for your confirmation.",
             'amount_usd' => $deal['dollar_amount'],
             'proof_image_url' => $proofUrl,
             'proof_type' => 'usd_sent',
@@ -166,8 +157,8 @@ class DealController {
         ]);
 
         $updated = $this->dealModel->getById($id);
-        $updated['timeline'] = array_map(fn($e) => $this->mapTimelineEvent($e), $updated['timeline']);
-        jsonSuccess($updated, 'Dollar proof uploaded');
+        $updated['timeline'] = $this->dealModel->getTimeline($id);
+        jsonSuccess(mapDeal($updated), 'Dollar proof uploaded');
     }
 
     public function confirmReceipt(int $id): void {
@@ -177,17 +168,6 @@ class DealController {
         $now = date('Y-m-d H:i:s');
         $currentDue = (float)$deal['expected_bdt_amount'] - (float)$deal['paid_amount'];
         $newStatus = (float)$deal['paid_amount'] > 0 ? 'partially_paid' : 'active_due';
-
-        $this->dealModel->addTimelineEvent([
-            'deal_id' => $id,
-            'event_type' => 'receipt_confirmed',
-            'actor_role' => 'customer',
-            'actor_name' => $deal['customer_name'],
-            'title' => 'Dollar Receipt Confirmed',
-            'description' => "Customer verified receipt of \${$deal['dollar_amount']}. Active outstanding balance established at ৳" . number_format($currentDue) . ".",
-            'amount_usd' => $deal['dollar_amount'],
-            'amount_bdt' => $currentDue,
-        ]);
 
         $this->dealModel->update($id, [
             'status' => $newStatus,
@@ -208,8 +188,8 @@ class DealController {
         ]);
 
         $updated = $this->dealModel->getById($id);
-        $updated['timeline'] = array_map(fn($e) => $this->mapTimelineEvent($e), $updated['timeline']);
-        jsonSuccess($updated, 'Receipt confirmed');
+        $updated['timeline'] = $this->dealModel->getTimeline($id);
+        jsonSuccess(mapDeal($updated), 'Receipt confirmed');
     }
 
     public function dispute(int $id): void {
@@ -244,8 +224,8 @@ class DealController {
         ]);
 
         $updated = $this->dealModel->getById($id);
-        $updated['timeline'] = array_map(fn($e) => $this->mapTimelineEvent($e), $updated['timeline']);
-        jsonSuccess($updated, 'Dispute raised');
+        $updated['timeline'] = $this->dealModel->getTimeline($id);
+        jsonSuccess(mapDeal($updated), 'Dispute raised');
     }
 
     public function cancel(int $id): void {
@@ -259,7 +239,7 @@ class DealController {
             'deal_id' => $id,
             'event_type' => 'deal_cancelled',
             'actor_role' => 'owner',
-            'actor_name' => 'Business Owner',
+            'actor_name' => 'Ahmed Sourov',
             'title' => 'Deal Cancelled',
             'description' => "Deal cancelled: \"$reason\"",
         ]);
@@ -270,8 +250,8 @@ class DealController {
         ]);
 
         $updated = $this->dealModel->getById($id);
-        $updated['timeline'] = array_map(fn($e) => $this->mapTimelineEvent($e), $updated['timeline']);
-        jsonSuccess($updated, 'Deal cancelled');
+        $updated['timeline'] = $this->dealModel->getTimeline($id);
+        jsonSuccess(mapDeal($updated), 'Deal cancelled');
     }
 
     public function submitPayment(int $dealId): void {
@@ -314,8 +294,8 @@ class DealController {
         ]);
 
         $updated = $this->dealModel->getById($dealId);
-        $updated['timeline'] = array_map(fn($e) => $this->mapTimelineEvent($e), $updated['timeline']);
-        jsonSuccess($updated, 'Payment proof submitted');
+        $updated['timeline'] = $this->dealModel->getTimeline($dealId);
+        jsonSuccess(mapDeal($updated), 'Payment proof submitted');
     }
 
     public function approvePayment(int $dealId, int $eventId): void {
@@ -344,18 +324,6 @@ class DealController {
         // Update original event status to approved
         Database::getConnection()->prepare('UPDATE deal_timeline_events SET proof_status = ? WHERE id = ?')
             ->execute(['approved', $eventId]);
-
-        // Add approval event
-        $this->dealModel->addTimelineEvent([
-            'deal_id' => $dealId,
-            'event_type' => 'payment_approved',
-            'actor_role' => 'owner',
-            'actor_name' => 'Business Owner',
-            'title' => 'Payment Approved (৳' . number_format($amountToApprove) . ')',
-            'description' => "Payment screenshot verified. ৳" . number_format($amountToApprove) . " applied to deal. Remaining balance: ৳" . number_format($newDueAmount) . ".",
-            'amount_bdt' => $amountToApprove,
-            'payment_event_id' => $targetEvent['payment_event_id'],
-        ]);
 
         $newStatus = $isCompleted ? 'completed' : 'partially_paid';
         $updateData = [
@@ -398,8 +366,8 @@ class DealController {
         ]);
 
         $updated = $this->dealModel->getById($dealId);
-        $updated['timeline'] = array_map(fn($e) => $this->mapTimelineEvent($e), $updated['timeline']);
-        jsonSuccess($updated, 'Payment approved');
+        $updated['timeline'] = $this->dealModel->getTimeline($dealId);
+        jsonSuccess(mapDeal($updated), 'Payment approved');
     }
 
     public function declinePayment(int $dealId, int $eventId): void {
@@ -428,7 +396,7 @@ class DealController {
             'deal_id' => $dealId,
             'event_type' => 'payment_declined',
             'actor_role' => 'owner',
-            'actor_name' => 'Business Owner',
+            'actor_name' => 'Ahmed Sourov',
             'title' => 'Payment Declined (৳' . number_format($amountDeclined) . ')',
             'description' => "Payment rejected by owner: \"$reason\". No deduction made.",
             'amount_bdt' => $amountDeclined,
@@ -449,27 +417,8 @@ class DealController {
         ]);
 
         $updated = $this->dealModel->getById($dealId);
-        $updated['timeline'] = array_map(fn($e) => $this->mapTimelineEvent($e), $updated['timeline']);
-        jsonSuccess($updated, 'Payment declined');
+        $updated['timeline'] = $this->dealModel->getTimeline($dealId);
+        jsonSuccess(mapDeal($updated), 'Payment declined');
     }
 
-    private function mapTimelineEvent(array $evt): array {
-        return [
-            'id' => (string)$evt['id'],
-            'timestamp' => $evt['created_at'],
-            'type' => $evt['event_type'],
-            'actor' => $evt['actor_role'],
-            'actorName' => $evt['actor_name'],
-            'title' => $evt['title'],
-            'description' => $evt['description'],
-            'amountUsd' => $evt['amount_usd'] !== null ? (float)$evt['amount_usd'] : null,
-            'amountBdt' => $evt['amount_bdt'] !== null ? (float)$evt['amount_bdt'] : null,
-            'exchangeRate' => $evt['exchange_rate'] !== null ? (float)$evt['exchange_rate'] : null,
-            'proofImageUrl' => $evt['proof_image_url'],
-            'proofType' => $evt['proof_type'],
-            'proofStatus' => $evt['proof_status'],
-            'paymentEventId' => $evt['payment_event_id'],
-            'rejectionReason' => $evt['rejection_reason'],
-        ];
-    }
 }

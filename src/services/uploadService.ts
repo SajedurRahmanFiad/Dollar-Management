@@ -1,10 +1,18 @@
 import { api } from './api';
 
+export interface UploadResult {
+  url: string;
+  thumbnailUrl: string;
+}
+
 export const uploadService = {
-  async uploadProof(file: File): Promise<string> {
+  async uploadProof(file: File, dealId?: string): Promise<UploadResult> {
     const formData = new FormData();
     formData.append('proof', file);
-    const res = await api.post<{ data: { url: string } }>('/upload/proof', formData, true);
-    return res.data.url;
+    if (dealId) {
+      formData.append('dealId', dealId);
+    }
+    const res = await api.post<{ data: UploadResult }>('/upload/proof', formData, true);
+    return res.data;
   },
 };

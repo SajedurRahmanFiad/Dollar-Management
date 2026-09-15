@@ -15,13 +15,13 @@ export interface LoginResponse {
 
 export const authService = {
   async login(username: string, password: string): Promise<LoginResponse> {
-    const res = await api.post<LoginResponse>('/auth/login', { username, password });
-    api.setToken(res.token);
-    return res;
+    const res = await api.post<{ success: boolean; message: string; data: LoginResponse }>('/auth/login', { username, password });
+    api.setToken(res.data.token);
+    return res.data;
   },
 
   async me(): Promise<AuthUser> {
-    const res = await api.get<{ data: AuthUser }>('/auth/me');
+    const res = await api.get<{ success: boolean; data: AuthUser }>('/auth/me');
     return res.data;
   },
 

@@ -19,16 +19,14 @@ export const customerService = {
   async create(data: {
     name: string;
     phone: string;
-    location?: string;
+    companyName?: string;
     notes?: string;
-    preferredChannel?: string;
   }): Promise<Customer> {
     const res = await api.post<{ data: Customer }>('/customers', {
       name: data.name,
       phone: data.phone,
-      location: data.location,
+      company_name: data.companyName,
       notes: data.notes,
-      preferred_channel: data.preferredChannel || 'WhatsApp',
     });
     return res.data;
   },

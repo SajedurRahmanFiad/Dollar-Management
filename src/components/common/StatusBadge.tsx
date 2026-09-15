@@ -30,7 +30,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       break;
 
     case 'awaiting_confirmation':
-      label = 'Awaiting Customer Confirmation';
+      label = 'Awaiting Client Confirmation';
       colorClasses = 'bg-sky-500/10 text-sky-700 border-sky-300/40';
       dotColor = 'bg-sky-500 animate-pulse';
       break;

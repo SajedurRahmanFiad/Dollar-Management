@@ -29,12 +29,7 @@ class RequestController {
         $requests = $this->requestModel->getAll($status, $customerId, $search);
 
         $result = array_map(function ($r) {
-            $r['customerName'] = $r['customer_name'];
-            $r['customerPhone'] = $r['customer_phone'];
-            $r['requestedUsdAmount'] = (float)$r['requested_usd_amount'];
-            $r['targetRate'] = $r['target_rate'] !== null ? (float)$r['target_rate'] : null;
-            $r['convertedDealId'] = $r['converted_deal_id'] ? (string)$r['converted_deal_id'] : null;
-            return $r;
+            return mapRequest($r);
         }, $requests);
 
         jsonSuccess($result);
@@ -85,7 +80,7 @@ class RequestController {
         ]);
 
         $request = $this->requestModel->getById($requestId);
-        jsonSuccess($request, 'Request created');
+        jsonSuccess(mapRequest($request), 'Request created');
     }
 
     public function convert(int $id): void {
@@ -120,8 +115,8 @@ class RequestController {
             'deal_id' => $dealId,
             'event_type' => 'deal_created',
             'actor_role' => 'owner',
-            'actor_name' => 'Business Owner',
-            'title' => "Deal Created from Request $requestNumber",
+            'actor_name' => 'Ahmed Sourov',
+            'title' => "Deal Created from Request {$request['request_number']}",
             'description' => "Agreement for \$$dollarAmount @ ৳" . number_format($exchangeRate, 2) . " = ৳" . number_format($expectedBdt) . ".",
             'amount_usd' => $dollarAmount,
             'amount_bdt' => $expectedBdt,
@@ -148,22 +143,9 @@ class RequestController {
         ]);
 
         $deal = $this->dealModel->getById($dealId);
-        $deal['customerName'] = $customer['name'];
-        $deal['customerPhone'] = $customer['phone'];
-        $deal['timeline'] = array_map(fn($e) => [
-            'id' => (string)$e['id'],
-            'timestamp' => $e['created_at'],
-            'type' => $e['event_type'],
-            'actor' => $e['actor_role'],
-            'actorName' => $e['actor_name'],
-            'title' => $e['title'],
-            'description' => $e['description'],
-            'amountUsd' => $e['amount_usd'] !== null ? (float)$e['amount_usd'] : null,
-            'amountBdt' => $e['amount_bdt'] !== null ? (float)$e['amount_bdt'] : null,
-            'exchangeRate' => $e['exchange_rate'] !== null ? (float)$e['exchange_rate'] : null,
-        ], $this->dealModel->getTimeline($dealId));
+        $deal['timeline'] = $this->dealModel->getTimeline($dealId);
 
-        jsonSuccess($deal, 'Request converted to deal');
+        jsonSuccess(mapDeal($deal), 'Request converted to deal');
     }
 
     public function reject(int $id): void {

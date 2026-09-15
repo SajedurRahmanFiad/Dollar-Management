@@ -67,18 +67,11 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Left Side: Brand Indicator */}
         <div className="flex items-center gap-2">
           <div className="lg:hidden flex items-center gap-2">
-            <div
-              className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white shadow-2xs ${
-                activeRole === 'customer'
-                  ? 'bg-gradient-to-tr from-amber-500 to-amber-600'
-                  : 'bg-slate-900'
-              }`}
-            >
-              $
-            </div>
-            <span className="font-extrabold text-xs text-slate-900 tracking-tight block sm:hidden">
-              Ahmed Sourov
-            </span>
+            <img
+              src="/uploads/logoPNGFIT.png"
+              alt="Fundify"
+              className="h-8 w-auto max-w-[120px] object-contain"
+            />
           </div>
 
           {/* Search Bar (Desktop) */}

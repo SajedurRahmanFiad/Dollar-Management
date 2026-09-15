@@ -100,7 +100,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 animate-in fade-in duration-150">
       {/* Top Banner & Quick Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
             Dashboard
@@ -207,7 +207,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-sm font-semibold text-slate-500">Proofs</span>
             </div>
             <span className="text-[11px] text-slate-500 font-medium">
-              +{pendingRequests.length} client buy inquiries
+              +{pendingRequests.length} client buy requests
             </span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -216,12 +216,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* Action Queue Section (If payment proofs or customer inquiries are waiting) */}
-      {(pendingPaymentEvents.length > 0 || pendingRequests.length > 0) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Sub-card 1: Payment Proofs Awaiting Verification */}
-          {pendingPaymentEvents.length > 0 && (
-            <div className="bg-amber-50/50 border border-amber-200/80 rounded-2xl p-5 shadow-xs">
+      {/* Action Queue Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Sub-card 1: Payment Proofs Awaiting Verification */}
+        <div className="bg-amber-50/50 border border-amber-200/80 rounded-2xl p-5 shadow-xs flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-amber-600 animate-spin" />
@@ -234,8 +232,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </span>
               </div>
 
-              <div className="space-y-2.5">
-                {pendingPaymentEvents.map(({ deal, event }) => (
+          {pendingPaymentEvents.length > 0 ? (
+            <div className="space-y-2.5">
+              {pendingPaymentEvents.map(({ deal, event }) => (
                   <div
                     key={event.id}
                     className="bg-white p-3.5 rounded-xl border border-amber-200/60 shadow-2xs flex items-center justify-between gap-3"
@@ -291,19 +290,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
+              ))}
             </div>
+          ) : (
+            <p className="flex min-h-24 flex-1 items-center justify-center text-center text-xs font-semibold text-emerald-700">
+              Everything is clean. No payment proofs need verification.
+            </p>
           )}
+        </div>
 
-          {/* Sub-card 2: Incoming Customer Buy Inquiries */}
-          {pendingRequests.length > 0 && (
-            <div className="bg-blue-50/50 border border-blue-200/80 rounded-2xl p-5 shadow-xs">
+        {/* Sub-card 2: Incoming Customer Buy Inquiries */}
+        <div className="bg-blue-50/50 border border-blue-200/80 rounded-2xl p-5 shadow-xs flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Inbox className="w-4 h-4 text-blue-600" />
                   <h3 className="text-sm font-black text-blue-950">
-                    Customer Inquiries ({pendingRequests.length})
+                    Client Requests ({pendingRequests.length})
                   </h3>
                 </div>
                 <button
@@ -314,8 +316,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-2.5">
-                {pendingRequests.slice(0, 3).map((req) => (
+          {pendingRequests.length > 0 ? (
+            <div className="space-y-2.5">
+              {pendingRequests.slice(0, 3).map((req) => (
                   <div
                     key={req.id}
                     className="bg-white p-3.5 rounded-xl border border-blue-200/60 shadow-2xs flex items-center justify-between gap-3"
@@ -325,13 +328,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <span className="text-xs font-bold text-slate-900">
                           {req.customerName}
                         </span>
-                        <span className="text-[10px] text-slate-400">
-                          ({req.customerPhone})
-                        </span>
                       </div>
                       <div className="text-xs font-black text-blue-900 mt-0.5">
                         {formatUsd(req.requestedUsdAmount)} USD
-                        {req.targetRate ? ` @ ৳${req.targetRate}` : ''}
                       </div>
                     </div>
 
@@ -339,7 +338,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       onClick={async () => {
                         const rate = prompt(
                           `Enter exchange rate for ${req.customerName} ($${req.requestedUsdAmount}):`,
-                          req.targetRate ? req.targetRate.toString() : '122.50'
+                          '122.50'
                         );
                         if (rate && !isNaN(parseFloat(rate))) {
                           const deal = await convertRequestToDeal(req.id, parseFloat(rate));
@@ -351,23 +350,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       Convert to Deal
                     </button>
                   </div>
-                ))}
-              </div>
+              ))}
             </div>
+          ) : (
+            <p className="flex min-h-24 flex-1 items-center justify-center text-center text-xs font-semibold text-emerald-700">
+              Everything is clean. No customer requests are pending.
+            </p>
           )}
         </div>
-      )}
+      </div>
 
       {/* Recent Deals Table with Clean Visual Layout */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h2 className="text-base font-black text-slate-900">
-              Active Transactions &amp; Deals
+              Active Deals
             </h2>
-            <p className="text-xs text-slate-500">
-              Live tracking of exchange orders and settlement states
-            </p>
           </div>
 
           <button
@@ -409,7 +408,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     {formatUsd(deal.dollarAmount)}
                   </td>
                   <td className="py-3.5 px-4 font-mono text-slate-600 tabular-nums">
-                    ৳{formatRate(deal.exchangeRate)}
+                    {formatRate(deal.exchangeRate)}
                   </td>
                   <td className="py-3.5 px-4 tabular-nums">
                     <span

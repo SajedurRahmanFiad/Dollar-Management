@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { X, Upload, Sparkles, Image as ImageIcon, ArrowRight, ShieldCheck } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Upload, Sparkles, Image as ImageIcon, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import { Deal } from '../../types';
 import { generateReceiptDataUrl } from '../../utils/receiptGenerator';
 import { formatBdt } from '../../utils/calculations';
+import { uploadService } from '../../services/uploadService';
 
 interface SubmitPaymentProofModalProps {
   isOpen: boolean;
@@ -19,28 +20,35 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
 }) => {
   const currentRemaining = deal.dueAmount || deal.expectedBdtAmount - deal.paidAmount;
   const [amountBdt, setAmountBdt] = useState<number | ''>(currentRemaining);
-  const [proofUrl, setProofUrl] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [note, setNote] = useState('');
   const [paymentChannel, setPaymentChannel] = useState('bKash');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
   const numAmount = typeof amountBdt === 'number' ? amountBdt : 0;
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setProofUrl(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      setSelectedFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
     }
   };
 
-  const generateQuickReceipt = (channel: string) => {
+  const handleRemoveFile = () => {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl('');
+  };
+
+  const generateQuickReceipt = async (channel: string) => {
     setPaymentChannel(channel);
     const generated = generateReceiptDataUrl('bdt_paid', {
       amount: numAmount || currentRemaining,
@@ -49,24 +57,47 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
       channel: `${channel} Transfer`,
       ref: `${channel.substring(0, 3).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`,
     });
-    setProofUrl(generated);
+
+    // Convert SVG data URL to a File for upload
+    const blob = await fetch(generated).then(r => r.blob());
+    const file = new File([blob], `receipt_${channel.toLowerCase()}.svg`, { type: 'image/svg+xml' });
+    setSelectedFile(file);
+    setPreviewUrl(generated);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (numAmount <= 0) return;
 
-    const finalProof =
-      proofUrl ||
-      generateReceiptDataUrl('bdt_paid', {
-        amount: numAmount,
-        sender: deal.customerName,
-        recipient: 'FastFx Settlement Desk',
-        channel: `${paymentChannel} Transfer`,
-      });
+    setIsUploading(true);
 
-    onSubmit(deal.id, numAmount, finalProof, note.trim() || undefined);
-    onClose();
+    try {
+      let proofUrl: string;
+
+      if (selectedFile) {
+        const result = await uploadService.uploadProof(selectedFile, deal.id);
+        proofUrl = result.url;
+      } else {
+        // Generate fallback receipt and upload it
+        const generated = generateReceiptDataUrl('bdt_paid', {
+          amount: numAmount,
+          sender: deal.customerName,
+          recipient: 'FastFx Settlement Desk',
+          channel: `${paymentChannel} Transfer`,
+        });
+        const blob = await fetch(generated).then(r => r.blob());
+        const file = new File([blob], 'receipt_fallback.svg', { type: 'image/svg+xml' });
+        const result = await uploadService.uploadProof(file, deal.id);
+        proofUrl = result.url;
+      }
+
+      onSubmit(deal.id, numAmount, proofUrl, note.trim() || undefined);
+      onClose();
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -149,10 +180,10 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
               Payment Screenshot / Receipt <span className="text-rose-500">*</span>
             </label>
 
-            {proofUrl ? (
+            {previewUrl ? (
               <div className="relative rounded-xl border border-slate-200 overflow-hidden bg-slate-900/5 group">
                 <img
-                  src={proofUrl}
+                  src={previewUrl}
                   alt="Proof Preview"
                   className="w-full h-44 object-contain bg-slate-950/40"
                 />
@@ -160,15 +191,16 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
                   <label className="px-3 py-1.5 bg-white text-slate-900 text-xs font-semibold rounded-lg shadow-md cursor-pointer hover:bg-slate-100">
                     Change Receipt
                     <input
+                      ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
                       className="hidden"
-                      onChange={handleFileUpload}
+                      onChange={handleFileSelect}
                     />
                   </label>
                   <button
                     type="button"
-                    onClick={() => setProofUrl('')}
+                    onClick={handleRemoveFile}
                     className="px-3 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-lg shadow-md hover:bg-rose-700"
                   >
                     Remove
@@ -187,10 +219,11 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
                     <Upload className="w-3.5 h-3.5" />
                     <span>Upload Screenshot</span>
                     <input
+                      ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
                       className="hidden"
-                      onChange={handleFileUpload}
+                      onChange={handleFileSelect}
                     />
                   </label>
                 </div>
@@ -213,7 +246,7 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
           </div>
 
           <div className="p-3 bg-blue-50/80 border border-blue-200/60 rounded-xl text-xs text-blue-900 leading-relaxed">
-            <span className="font-semibold">Verification Step:</span> Once submitted, Ahmed Sourov will review your payment screenshot. Upon approval, ৳{numAmount ? numAmount.toLocaleString() : '0'} will be instantly deducted from your due balance.
+            <span className="font-semibold">Verification Step:</span> Once submitted, Fundify will review your payment screenshot. Upon approval, ৳{numAmount ? numAmount.toLocaleString() : '0'} will be instantly deducted from your due balance.
           </div>
 
           {/* Buttons */}
@@ -221,17 +254,27 @@ export const SubmitPaymentProofModal: React.FC<SubmitPaymentProofModalProps> = (
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 rounded-xl transition-colors"
+              disabled={isUploading}
+              className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 rounded-xl transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={numAmount <= 0}
+              disabled={numAmount <= 0 || isUploading}
               className="px-5 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-xs flex items-center gap-1.5"
             >
-              <span>Submit Payment Proof</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <span>Submit Payment Proof</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
             </button>
           </div>
         </form>

@@ -75,6 +75,24 @@ class DealModel {
         return $stmt->fetchAll();
     }
 
+    public function getTimelinesForDeals(array $dealIds): array {
+        if (empty($dealIds)) return [];
+
+        $placeholders = implode(',', array_fill(0, count($dealIds), '?'));
+        $stmt = $this->db->prepare(
+            "SELECT * FROM deal_timeline_events
+             WHERE deal_id IN ($placeholders)
+             ORDER BY deal_id ASC, created_at ASC, id ASC"
+        );
+        $stmt->execute(array_values($dealIds));
+
+        $timelines = [];
+        foreach ($stmt->fetchAll() as $event) {
+            $timelines[(string)$event['deal_id']][] = $event;
+        }
+        return $timelines;
+    }
+
     public function create(array $data): int {
         $stmt = $this->db->prepare(
             'INSERT INTO deals (deal_number, customer_id, dollar_amount, exchange_rate,

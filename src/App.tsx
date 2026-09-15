@@ -34,6 +34,8 @@ const MainContent: React.FC = () => {
   const [isNewDealModalOpen, setIsNewDealModalOpen] = useState(false);
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
+  const hasInitializedRoute = React.useRef(false);
+  const mainContentRef = React.useRef<HTMLElement | null>(null);
 
   // Sync role from auth user
   React.useEffect(() => {
@@ -116,7 +118,15 @@ const MainContent: React.FC = () => {
   };
 
   React.useEffect(() => {
+    if (!hasInitializedRoute.current) {
+      hasInitializedRoute.current = true;
+      return;
+    }
     syncRouteFromState();
+  }, [currentView, selectedDealId, selectedCustomerId]);
+
+  React.useEffect(() => {
+    mainContentRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [currentView, selectedDealId, selectedCustomerId]);
 
   React.useEffect(() => {
@@ -261,7 +271,7 @@ const MainContent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 overflow-hidden font-sans text-slate-900 antialiased">
+    <div className="flex h-screen w-full bg-slate-100 overflow-hidden font-sans text-slate-900 antialiased">
       <Sidebar
         onOpenNewDealModal={() => setIsNewDealModalOpen(true)}
         onOpenNewRequestModal={() => setIsNewRequestModalOpen(true)}
@@ -273,7 +283,7 @@ const MainContent: React.FC = () => {
           onOpenNewRequestModal={() => setIsNewRequestModalOpen(true)}
         />
 
-        <main className="flex-1 overflow-y-auto p-3.5 sm:p-5 lg:p-7 pb-24 lg:pb-7">
+        <main ref={mainContentRef} className="flex-1 overflow-y-auto p-3.5 sm:p-5 lg:p-7 pb-24 lg:pb-7">
           <div className="max-w-7xl mx-auto">{renderActiveView()}</div>
         </main>
 

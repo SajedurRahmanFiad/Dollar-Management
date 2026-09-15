@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { X, Upload, Sparkles, Image as ImageIcon, CheckCircle, ArrowRight } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Upload, Sparkles, Image as ImageIcon, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { Deal } from '../../types';
 import { generateReceiptDataUrl } from '../../utils/receiptGenerator';
 import { formatUsd } from '../../utils/calculations';
+import { uploadService } from '../../services/uploadService';
 
 interface UploadDollarProofModalProps {
   isOpen: boolean;
@@ -17,26 +18,33 @@ export const UploadDollarProofModal: React.FC<UploadDollarProofModalProps> = ({
   deal,
   onUpload,
 }) => {
-  const [proofUrl, setProofUrl] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [note, setNote] = useState('');
   const [previewChannel, setPreviewChannel] = useState('Binance Pay');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setProofUrl(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      setSelectedFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
     }
   };
 
-  const generateQuickProof = (channel: string) => {
+  const handleRemoveFile = () => {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl('');
+  };
+
+  const generateQuickProof = async (channel: string) => {
     setPreviewChannel(channel);
     const generated = generateReceiptDataUrl('usd_sent', {
       amount: deal.dollarAmount,
@@ -45,20 +53,46 @@ export const UploadDollarProofModal: React.FC<UploadDollarProofModalProps> = ({
       channel: `${channel} USD Transfer`,
       ref: `USD-${Math.floor(100000 + Math.random() * 900000)}`,
     });
-    setProofUrl(generated);
+
+    // Convert SVG data URL to a File for upload
+    const blob = await fetch(generated).then(r => r.blob());
+    const file = new File([blob], `receipt_${channel.toLowerCase().replace(/\s+/g, '_')}.svg`, { type: 'image/svg+xml' });
+    setSelectedFile(file);
+    setPreviewUrl(generated);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const finalProof = proofUrl || generateReceiptDataUrl('usd_sent', {
-      amount: deal.dollarAmount,
-      recipient: deal.customerName,
-      sender: 'FastFx Trading Desk',
-      channel: `${previewChannel} USD`,
-    });
+    setIsUploading(true);
 
-    onUpload(deal.id, finalProof, note.trim() || undefined);
-    onClose();
+    try {
+      let proofUrl: string;
+
+      if (selectedFile) {
+        // Upload file to server, get back webp URL
+        const result = await uploadService.uploadProof(selectedFile, deal.id);
+        proofUrl = result.url;
+      } else {
+        // Generate fallback receipt and upload it
+        const generated = generateReceiptDataUrl('usd_sent', {
+          amount: deal.dollarAmount,
+          recipient: deal.customerName,
+          sender: 'FastFx Trading Desk',
+          channel: `${previewChannel} USD`,
+        });
+        const blob = await fetch(generated).then(r => r.blob());
+        const file = new File([blob], 'receipt_fallback.svg', { type: 'image/svg+xml' });
+        const result = await uploadService.uploadProof(file, deal.id);
+        proofUrl = result.url;
+      }
+
+      onUpload(deal.id, proofUrl, note.trim() || undefined);
+      onClose();
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -71,7 +105,7 @@ export const UploadDollarProofModal: React.FC<UploadDollarProofModalProps> = ({
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div>
             <span className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-              Ahmed Sourov Action
+              Fundify Action
             </span>
             <h3 className="text-sm sm:text-base font-black text-slate-900">
               Upload Dollar Transfer Proof ({deal.dealNumber})
@@ -107,10 +141,10 @@ export const UploadDollarProofModal: React.FC<UploadDollarProofModalProps> = ({
               Transfer Screenshot / Proof <span className="text-rose-500">*</span>
             </label>
 
-            {proofUrl ? (
+            {previewUrl ? (
               <div className="relative rounded-xl border border-slate-200 overflow-hidden bg-slate-900/5 group">
                 <img
-                  src={proofUrl}
+                  src={previewUrl}
                   alt="Proof Preview"
                   className="w-full h-44 object-contain bg-slate-950/40"
                 />
@@ -118,15 +152,16 @@ export const UploadDollarProofModal: React.FC<UploadDollarProofModalProps> = ({
                   <label className="px-3 py-1.5 bg-white text-slate-900 text-xs font-semibold rounded-lg shadow-md cursor-pointer hover:bg-slate-100">
                     Change Screenshot
                     <input
+                      ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
                       className="hidden"
-                      onChange={handleFileUpload}
+                      onChange={handleFileSelect}
                     />
                   </label>
                   <button
                     type="button"
-                    onClick={() => setProofUrl('')}
+                    onClick={handleRemoveFile}
                     className="px-3 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-lg shadow-md hover:bg-rose-700"
                   >
                     Remove
@@ -148,10 +183,11 @@ export const UploadDollarProofModal: React.FC<UploadDollarProofModalProps> = ({
                     <Upload className="w-3.5 h-3.5" />
                     <span>Browse File</span>
                     <input
+                      ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
                       className="hidden"
-                      onChange={handleFileUpload}
+                      onChange={handleFileSelect}
                     />
                   </label>
                 </div>
@@ -183,16 +219,27 @@ export const UploadDollarProofModal: React.FC<UploadDollarProofModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 rounded-xl transition-colors"
+              disabled={isUploading}
+              className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 rounded-xl transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-xs flex items-center gap-1.5"
+              disabled={isUploading}
+              className="px-5 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50"
             >
-              <span>Send Dollar Proof</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <span>Send Dollar Proof</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
             </button>
           </div>
         </form>

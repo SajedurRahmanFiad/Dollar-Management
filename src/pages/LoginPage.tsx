@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { DollarSign, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -29,11 +29,11 @@ export const LoginPage: React.FC = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-4">
-            <DollarSign className="w-8 h-8 text-emerald-400" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">Ahmed Sourov Exchange</h1>
-          <p className="text-slate-400 mt-1">Dollar Exchange Management System</p>
+          <img
+            src="/uploads/logoPNGFIT.png"
+            alt="Fundify"
+            className="mx-auto mb-4 h-24 w-auto max-w-full object-contain"
+          />
         </div>
 
         {/* Login Card */}

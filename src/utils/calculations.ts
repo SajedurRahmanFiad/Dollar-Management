@@ -90,3 +90,20 @@ export function formatUsd(amount: number): string {
 export function formatRate(rate: number): string {
   return `৳${rate.toFixed(2)}`;
 }
+
+export function formatOrdinalDate(value: string): string {
+  const date = new Date(value);
+  const day = date.getDate();
+  const suffix =
+    day % 100 >= 11 && day % 100 <= 13
+      ? 'th'
+      : day % 10 === 1
+      ? 'st'
+      : day % 10 === 2
+      ? 'nd'
+      : day % 10 === 3
+      ? 'rd'
+      : 'th';
+
+  return `${day}${suffix} ${date.toLocaleString('en-US', { month: 'long' })}, ${date.getFullYear()}`;
+}

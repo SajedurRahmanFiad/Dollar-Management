@@ -16,6 +16,8 @@ import { CustomerPortalView } from './components/portal/CustomerPortalView';
 import { NewDealModal } from './components/modals/NewDealModal';
 import { NewCustomerModal } from './components/modals/NewCustomerModal';
 import { NewRequestModal } from './components/modals/NewRequestModal';
+import { ProfilePage } from './pages/ProfilePage';
+import { AppFooter } from './components/layout/AppFooter';
 
 const MainContent: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -35,6 +37,7 @@ const MainContent: React.FC = () => {
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
   const hasInitializedRoute = React.useRef(false);
+  const isHydratingRoute = React.useRef(false);
   const mainContentRef = React.useRef<HTMLElement | null>(null);
 
   // Sync role from auth user
@@ -45,11 +48,17 @@ const MainContent: React.FC = () => {
         if (user.customerId) {
           setActiveCustomerId(String(user.customerId));
         }
+        if (window.location.pathname === '/' || window.location.pathname === '/dashboard') {
+          setCurrentView('portal');
+        }
       } else {
         setActiveRole('owner');
+        if (window.location.pathname === '/' || window.location.pathname === '/portal') {
+          setCurrentView('dashboard');
+        }
       }
     }
-  }, [user, setActiveRole, setActiveCustomerId]);
+  }, [user, setActiveRole, setActiveCustomerId, setCurrentView]);
 
   const syncRouteFromState = () => {
     const routePath = selectedDealId
@@ -95,10 +104,11 @@ const MainContent: React.FC = () => {
       | 'customers'
       | 'dues'
       | 'requests'
-      | 'portal';
+      | 'portal'
+      | 'profile';
 
     if (
-      ['dashboard', 'deals', 'customers', 'dues', 'requests', 'portal'].includes(
+      ['dashboard', 'deals', 'customers', 'dues', 'requests', 'portal', 'profile'].includes(
         nextView
       )
     ) {
@@ -119,7 +129,10 @@ const MainContent: React.FC = () => {
 
   React.useEffect(() => {
     if (!hasInitializedRoute.current) {
-      hasInitializedRoute.current = true;
+      return;
+    }
+    if (isHydratingRoute.current) {
+      isHydratingRoute.current = false;
       return;
     }
     syncRouteFromState();
@@ -130,7 +143,9 @@ const MainContent: React.FC = () => {
   }, [currentView, selectedDealId, selectedCustomerId]);
 
   React.useEffect(() => {
+    isHydratingRoute.current = true;
     syncStateFromRoute();
+    hasInitializedRoute.current = true;
     window.addEventListener('popstate', syncStateFromRoute);
 
     return () => {
@@ -186,6 +201,8 @@ const MainContent: React.FC = () => {
               onOpenNewRequestModal={() => setIsNewRequestModalOpen(true)}
             />
           );
+        case 'profile':
+          return <ProfilePage />;
         case 'portal':
         case 'dashboard':
         default:
@@ -250,6 +267,9 @@ const MainContent: React.FC = () => {
           />
         );
 
+      case 'profile':
+        return <ProfilePage />;
+
       case 'portal':
         return (
           <CustomerPortalView
@@ -271,20 +291,13 @@ const MainContent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-100 overflow-hidden font-sans text-slate-900 antialiased">
-      <Sidebar
-        onOpenNewDealModal={() => setIsNewDealModalOpen(true)}
-        onOpenNewRequestModal={() => setIsNewRequestModalOpen(true)}
-      />
-
+    <div className="flex h-screen w-full bg-slate-200 overflow-hidden font-sans text-slate-900 antialiased">
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <Header
-          onOpenNewDealModal={() => setIsNewDealModalOpen(true)}
-          onOpenNewRequestModal={() => setIsNewRequestModalOpen(true)}
-        />
+        <Header />
 
-        <main ref={mainContentRef} className="flex-1 overflow-y-auto p-3.5 sm:p-5 lg:p-7 pb-24 lg:pb-7">
-          <div className="max-w-7xl mx-auto">{renderActiveView()}</div>
+        <main ref={mainContentRef} className="flex-1 overflow-y-auto p-3.5 sm:p-5 lg:p-7 lg:pl-32 pb-24 lg:pb-7">
+          <div className="mx-auto max-w-7xl">{renderActiveView()}</div>
+          <AppFooter />
         </main>
 
         <MobileBottomNav
@@ -292,6 +305,8 @@ const MainContent: React.FC = () => {
           onOpenNewRequestModal={() => setIsNewRequestModalOpen(true)}
         />
       </div>
+
+      <Sidebar />
 
       <NewDealModal
         isOpen={isNewDealModalOpen}

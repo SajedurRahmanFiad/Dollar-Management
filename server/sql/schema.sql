@@ -25,6 +25,9 @@ CREATE TABLE users (
     role ENUM('owner','customer') NOT NULL,
     customer_id INT NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
+    display_name VARCHAR(100) NULL,
+    phone VARCHAR(20) NULL,
+    company_name VARCHAR(150) NULL,
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
@@ -53,7 +56,7 @@ CREATE TABLE deals (
     expected_bdt_amount DECIMAL(14,2) NOT NULL,
     paid_amount DECIMAL(14,2) DEFAULT 0,
     due_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
-    status ENUM('draft','dollar_sent_pending','awaiting_confirmation','active_due','partially_paid','completed','disputed','cancelled') DEFAULT 'draft',
+    status ENUM('draft','dollar_sent_pending','awaiting_confirmation','fundify_verification_pending','active_due','partially_paid','completed','disputed','cancelled') DEFAULT 'draft',
     notes TEXT NULL,
     dollar_proof_url VARCHAR(500) NULL,
     dollar_proof_uploaded_at TIMESTAMP NULL,

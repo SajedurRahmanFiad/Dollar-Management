@@ -35,6 +35,12 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       dotColor = 'bg-sky-500 animate-pulse';
       break;
 
+    case 'fundify_verification_pending':
+      label = 'Fundify Verification Pending';
+      colorClasses = 'bg-violet-500/10 text-violet-700 border-violet-300/40';
+      dotColor = 'bg-violet-600 animate-pulse';
+      break;
+
     case 'active_due':
       label = 'Active Due (Unpaid)';
       colorClasses = 'bg-amber-500/10 text-amber-800 border-amber-300/50';

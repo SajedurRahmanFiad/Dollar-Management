@@ -6,12 +6,13 @@ export function calculateCustomerSummary(customer: Customer, deals: Deal[]): Cus
   // Valid active/completed deals
   const confirmedDeals = customerDeals.filter((d) => 
     d.status === 'active_due' || 
-    d.status === 'partially_paid' || 
+    d.status === 'partially_paid' ||
+    d.status === 'fundify_verification_pending' ||
     d.status === 'completed'
   );
 
   const currentDue = customerDeals
-    .filter((d) => d.status === 'active_due' || d.status === 'partially_paid')
+    .filter((d) => d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'fundify_verification_pending')
     .reduce((sum, d) => sum + (d.dueAmount || 0), 0);
 
   const lifetimeValue = confirmedDeals.reduce((sum, d) => sum + (d.expectedBdtAmount || 0), 0);
@@ -20,7 +21,7 @@ export function calculateCustomerSummary(customer: Customer, deals: Deal[]): Cus
   
   const totalDealsCount = customerDeals.length;
   const activeDealsCount = customerDeals.filter(
-    (d) => d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'awaiting_confirmation'
+    (d) => d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'fundify_verification_pending' || d.status === 'awaiting_confirmation'
   ).length;
   const completedDealsCount = customerDeals.filter((d) => d.status === 'completed').length;
   const disputedDealsCount = customerDeals.filter((d) => d.status === 'disputed').length;
@@ -43,7 +44,7 @@ export function calculateCustomerSummary(customer: Customer, deals: Deal[]): Cus
   });
 
   // Calculate oldest unpaid active deal days
-  const activeDeals = customerDeals.filter((d) => (d.status === 'active_due' || d.status === 'partially_paid') && d.confirmedAt);
+  const activeDeals = customerDeals.filter((d) => (d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'fundify_verification_pending') && d.confirmedAt);
   let oldestUnpaidDealDays = 0;
   if (activeDeals.length > 0) {
     const oldestConfirmedDate = Math.min(...activeDeals.map((d) => new Date(d.confirmedAt || d.createdAt).getTime()));

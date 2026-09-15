@@ -7,6 +7,7 @@ import { dashboardService } from '../services/dashboardService';
 import {
   ActorRole,
   Customer,
+  AppView,
   Deal,
   DollarRequest,
   PlatformActivity,
@@ -46,10 +47,11 @@ interface ExchangeContextType {
   createCustomer: (customerData: {
     name: string;
     phone: string;
+    password: string;
     companyName?: string;
     notes?: string;
   }) => Promise<Customer>;
-  updateCustomer: (id: string, updates: Partial<Customer>) => Promise<void>;
+  updateCustomer: (id: string, updates: Partial<Customer> & { password?: string }) => Promise<void>;
 
   // Request Operations
   createRequest: (requestData: {
@@ -69,12 +71,9 @@ interface ExchangeContextType {
   setSelectedDealId: (id: string | null) => void;
   selectedCustomerId: string | null;
   setSelectedCustomerId: (id: string | null) => void;
-  currentView: 'dashboard' | 'deals' | 'customers' | 'dues' | 'requests' | 'analytics' | 'portal';
-  setCurrentView: (view: 'dashboard' | 'deals' | 'customers' | 'dues' | 'requests' | 'analytics' | 'portal') => void;
+  currentView: AppView;
+  setCurrentView: (view: AppView) => void;
 
-  // Reset
-  resetToSampleData: () => void;
-  resetToMockData: () => void;
 }
 
 const ExchangeContext = createContext<ExchangeContextType | undefined>(undefined);
@@ -89,7 +88,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'deals' | 'customers' | 'dues' | 'requests' | 'analytics' | 'portal'>('dashboard');
+  const [currentView, setCurrentView] = useState<AppView>('dashboard');
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load initial data from API
@@ -130,12 +129,14 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const createCustomer = useCallback(async (customerData: {
     name: string;
     phone: string;
+    password: string;
     companyName?: string;
     notes?: string;
   }): Promise<Customer> => {
     const newCust = await customerService.create({
       name: customerData.name,
       phone: customerData.phone,
+      password: customerData.password,
       companyName: customerData.companyName,
       notes: customerData.notes,
     });
@@ -143,7 +144,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return newCust;
   }, []);
 
-  const updateCustomer = useCallback(async (id: string, updates: Partial<Customer>) => {
+  const updateCustomer = useCallback(async (id: string, updates: Partial<Customer> & { password?: string }) => {
     const updated = await customerService.update(Number(id), updates);
     setCustomers((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...updated } : c))
@@ -300,21 +301,6 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setRequests(freshRequests);
   }, []);
 
-  // Reset (re-seeds database)
-  const resetToSampleData = useCallback(async () => {
-    // Reload from server (server data is seeded)
-    const [dealsData, customersData, requestsData, activitiesData] = await Promise.all([
-      dealService.getAll().catch(() => []),
-      customerService.getAll().catch(() => []),
-      requestService.getAll().catch(() => []),
-      activityService.getAll().catch(() => []),
-    ]);
-    setDeals(dealsData);
-    setCustomers(customersData);
-    setRequests(requestsData);
-    setActivities(activitiesData);
-  }, []);
-
   return (
     <ExchangeContext.Provider
       value={{
@@ -348,8 +334,6 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSelectedCustomerId,
         currentView,
         setCurrentView,
-        resetToSampleData,
-        resetToMockData: resetToSampleData,
       }}
     >
       {children}

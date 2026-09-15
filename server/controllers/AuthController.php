@@ -26,43 +26,100 @@ class AuthController {
         }
 
         $token = generateToken((int)$user['id'], $user['role'], $user['customer_id'] ? (int)$user['customer_id'] : null);
-
-        $customer = null;
-        if ($user['customer_id']) {
-            $customer = $this->customerModel->getById((int)$user['customer_id']);
-        }
+        setcookie('dems_token', $token, [
+            'expires' => time() + 86400 * 7,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
 
         jsonSuccess([
             'token' => $token,
-            'user' => [
-                'id' => (int)$user['id'],
-                'role' => $user['role'],
-                'username' => $user['username'],
-                'customerId' => $user['customer_id'] ? (int)$user['customer_id'] : null,
-                'name' => $customer ? $customer['name'] : 'Admin',
-            ],
+            'user' => $this->profileResponse((int)$user['id']),
         ], 'Login successful');
+    }
+
+    public function logout(): void {
+        setcookie('dems_token', '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        jsonSuccess(null, 'Logged out');
+    }
+
+    public function updatePassword(): void {
+        $authUser = getAuthUser();
+        $data = getJsonInput();
+        requireFields($data, ['password']);
+        if (strlen((string)$data['password']) < 6) {
+            jsonError('Password must be at least 6 characters', 422);
+        }
+
+        $this->userModel->updatePasswordById((int)$authUser['user_id'], (string)$data['password']);
+        jsonSuccess(null, 'Password updated');
+    }
+
+    public function updateProfile(): void {
+        $authUser = getAuthUser();
+        $data = getJsonInput();
+        requireFields($data, ['name', 'phone']);
+
+        $name = sanitizeString((string)$data['name']);
+        $phone = sanitizeString((string)$data['phone']);
+        if ($name === '' || $phone === '') {
+            jsonError('Name and phone number are required', 422);
+        }
+        if ($this->userModel->findByUsernameExceptId($phone, (int)$authUser['user_id'])) {
+            jsonError('That phone number is already in use', 409);
+        }
+
+        $profile = [
+            'name' => $name,
+            'phone' => $phone,
+            'company_name' => $data['companyName'] ?? $data['company_name'] ?? null,
+        ];
+
+        $user = $this->userModel->getById((int)$authUser['user_id']);
+        if (!$user) jsonError('User not found', 404);
+
+        if ($user['customer_id']) {
+            $this->customerModel->update((int)$user['customer_id'], $profile);
+            $this->userModel->updateUsernameById((int)$user['id'], $phone);
+        } else {
+            $this->userModel->updateProfileById((int)$user['id'], [
+                'display_name' => $name,
+                'phone' => $phone,
+                'company_name' => $profile['company_name'],
+            ]);
+        }
+
+        jsonSuccess($this->profileResponse((int)$user['id']), 'Profile updated');
     }
 
     public function me(): void {
         $authUser = getAuthUser();
+        jsonSuccess($this->profileResponse((int)$authUser['user_id']));
+    }
 
-        $user = $this->userModel->getById($authUser['user_id']);
-        if (!$user) {
-            jsonError('User not found', 404);
-        }
+    private function profileResponse(int $userId): array {
+        $user = $this->userModel->getById($userId);
+        if (!$user) jsonError('User not found', 404);
 
-        $customer = null;
-        if ($user['customer_id']) {
-            $customer = $this->customerModel->getById((int)$user['customer_id']);
-        }
+        $customer = $user['customer_id']
+            ? $this->customerModel->getById((int)$user['customer_id'])
+            : null;
+        $phone = $customer['phone'] ?? ($user['phone'] ?? $user['username']);
 
-        jsonSuccess([
+        return [
             'id' => (int)$user['id'],
             'role' => $user['role'],
-            'username' => $user['username'],
+            'username' => $phone,
+            'phone' => $phone,
             'customerId' => $user['customer_id'] ? (int)$user['customer_id'] : null,
-            'name' => $customer ? $customer['name'] : 'Admin',
-        ]);
+            'name' => $customer['name'] ?? ($user['display_name'] ?? 'Admin'),
+            'companyName' => $customer['company_name'] ?? ($user['company_name'] ?? null),
+        ];
     }
 }

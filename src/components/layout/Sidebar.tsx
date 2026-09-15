@@ -12,18 +12,15 @@ import {
   Clock,
   Sparkles,
   X,
+  LogOut,
+  UserRound,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useExchange } from '../../context/ExchangeContext';
 
-interface SidebarProps {
-  onOpenNewDealModal?: () => void;
-  onOpenNewRequestModal?: () => void;
-}
-
-export const Sidebar: React.FC<SidebarProps> = ({
-  onOpenNewDealModal,
-  onOpenNewRequestModal,
-}) => {
+export const Sidebar: React.FC = () => {
+  const { logout } = useAuth();
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = React.useState(false);
   const {
     currentView,
     setCurrentView,
@@ -163,19 +160,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className="hidden lg:flex w-64 bg-white border-r border-slate-100 flex-col justify-between shrink-0 h-screen sticky top-0 select-none">
+    <div className="group fixed left-3 top-20 bottom-4 z-50 hidden lg:block">
+      <div className="pointer-events-none fixed inset-0 z-40 bg-slate-950/25 opacity-0 backdrop-blur-[1px] transition-opacity duration-300 group-hover:opacity-100" />
+      <aside
+        className="relative z-50 flex h-full w-20 flex-col justify-between overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white py-4 shadow-xl select-none transition-[width] duration-300 ease-in-out group-hover:w-64"
+      >
       <div className="flex flex-col">
         {/* Brand Header */}
-        <div className="h-16 px-5 flex items-center justify-between border-b border-slate-100">
-          <img
-            src="/uploads/logoPNGFIT.png"
-            alt="Fundify"
-            className="h-10 w-auto max-w-full object-contain"
-          />
+        <div className="flex h-16 items-center justify-center px-3 transition-[padding] duration-300 group-hover:justify-start group-hover:px-5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl transition-colors group-hover:w-full group-hover:justify-start group-hover:px-2">
+            <img
+              src="/uploads/Avatar.png"
+              alt="Account"
+              className="h-9 w-9 rounded-lg object-cover group-hover:hidden"
+            />
+            <img
+              src="/uploads/logoPNGFIT.png"
+              alt="Fundify"
+              className="hidden h-10 w-auto max-w-full object-contain group-hover:block"
+            />
+          </div>
         </div>
 
         {/* Navigation Items */}
-        <nav className="p-3 space-y-1">
+        <nav className="mt-3 space-y-1 p-2 transition-[padding] duration-300 group-hover:p-3">
           {activeNavList.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -188,25 +196,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => handleSelectTab(item.id)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all relative min-h-[42px] ${
+                className={`w-full flex cursor-pointer items-center rounded-xl text-xs font-semibold transition-all relative min-h-10.5 ${
                   isActive
                     ? 'bg-slate-900 text-white font-bold shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900'
-                }`}
+                } justify-center px-2 py-2.5 group-hover:justify-between group-hover:px-3.5`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-0 transition-[gap] duration-300 group-hover:justify-start group-hover:gap-3">
                   <Icon
-                    className={`w-4 h-4 ${
-                      isActive ? 'text-amber-400' : 'text-slate-400'
+                    className={`h-5 w-5 shrink-0 ${
+                      isActive ? 'text-slate-200' : 'text-slate-400'
                     }`}
                   />
-                  <span>{item.label}</span>
+                  <span className="pointer-events-none absolute whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:static group-hover:opacity-100">
+                    {item.label}
+                  </span>
                 </div>
 
                 {item.badge && (
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                      isActive ? 'bg-white/20 text-white' : item.badgeColor
+                    className={`hidden text-[10px] px-2 py-0.5 rounded-full font-bold group-hover:inline-flex ${
+                      isActive ? 'bg-white/15 text-white' : item.badgeColor
                     }`}
                   >
                     {item.badge}
@@ -217,6 +227,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </nav>
       </div>
-    </aside>
+      <div className="flex flex-col gap-1">
+        <button
+          type="button"
+          onClick={() => handleSelectTab('profile')}
+          className={`mx-2 flex min-h-10.5 cursor-pointer items-center justify-center gap-3 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all group-hover:mx-3 group-hover:justify-start group-hover:px-3.5 ${
+            currentView === 'profile'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          }`}
+        >
+          <UserRound className="h-5 w-5 shrink-0 text-slate-400" />
+          <span className="pointer-events-none absolute whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:static group-hover:opacity-100">
+            Profile
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsLogoutConfirmOpen(true)}
+          className="mx-2 mb-3 flex min-h-10.5 cursor-pointer items-center justify-center gap-3 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900 group-hover:mx-3 group-hover:justify-start group-hover:px-3.5"
+        >
+          <LogOut className="h-5 w-5 shrink-0 text-slate-400" />
+          <span className="pointer-events-none absolute whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:static group-hover:opacity-100">
+            Logout
+          </span>
+        </button>
+      </div>
+      {isLogoutConfirmOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs" onClick={() => setIsLogoutConfirmOpen(false)}>
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <h3 className="text-base font-black text-slate-900">Log out?</h3>
+            <p className="mt-2 text-xs text-slate-500">You will need to sign in again to access your account.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setIsLogoutConfirmOpen(false)} className="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100">Cancel</button>
+              <button type="button" onClick={logout} className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800">Log out</button>
+            </div>
+          </div>
+        </div>
+      )}
+      </aside>
+    </div>
   );
 };

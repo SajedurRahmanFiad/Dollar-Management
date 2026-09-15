@@ -273,7 +273,7 @@ class DealController {
             'actor_role' => 'customer',
             'actor_name' => $deal['customer_name'],
             'title' => 'Payment Proof Submitted (৳' . number_format($amountBdt) . ')',
-            'description' => $note ?: "Customer uploaded payment screenshot for ৳" . number_format($amountBdt) . ". Awaiting verification.",
+            'description' => $note ?: null,
             'amount_bdt' => $amountBdt,
             'proof_image_url' => $proofUrl,
             'proof_type' => 'bdt_paid',
@@ -291,6 +291,10 @@ class DealController {
             'description' => "{$deal['customer_name']} submitted payment screenshot for deal {$deal['deal_number']}.",
             'amount_bdt' => $amountBdt,
             'badge_type' => 'warning',
+        ]);
+
+        $this->dealModel->update($dealId, [
+            'status' => 'fundify_verification_pending',
         ]);
 
         $updated = $this->dealModel->getById($dealId);
@@ -391,6 +395,18 @@ class DealController {
         // Update original event status to rejected
         Database::getConnection()->prepare('UPDATE deal_timeline_events SET proof_status = ?, rejection_reason = ? WHERE id = ?')
             ->execute(['rejected', $reason, $eventId]);
+
+        $hasPendingProof = false;
+        foreach ($timeline as $evt) {
+            if ((int)$evt['id'] !== $eventId && $evt['event_type'] === 'payment_proof_submitted' && $evt['proof_status'] === 'pending') {
+                $hasPendingProof = true;
+                break;
+            }
+        }
+        $restoredStatus = $hasPendingProof
+            ? 'fundify_verification_pending'
+            : ((float)$deal['paid_amount'] > 0 ? 'partially_paid' : 'active_due');
+        $this->dealModel->update($dealId, ['status' => $restoredStatus]);
 
         $this->dealModel->addTimelineEvent([
             'deal_id' => $dealId,

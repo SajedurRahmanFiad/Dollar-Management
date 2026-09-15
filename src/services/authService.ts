@@ -4,8 +4,16 @@ export interface AuthUser {
   id: number;
   role: 'owner' | 'customer';
   username: string;
+  phone: string;
   customerId: number | null;
   name: string;
+  companyName?: string | null;
+}
+
+export interface ProfileUpdates {
+  name: string;
+  phone: string;
+  companyName?: string;
 }
 
 export interface LoginResponse {
@@ -27,6 +35,16 @@ export const authService = {
 
   logout() {
     api.setToken(null);
+    void api.post('/auth/logout').catch(() => undefined);
+  },
+
+  async updatePassword(password: string): Promise<void> {
+    await api.put('/auth/password', { password });
+  },
+
+  async updateProfile(updates: ProfileUpdates): Promise<AuthUser> {
+    const res = await api.put<{ success: boolean; data: AuthUser }>('/auth/profile', updates);
+    return res.data;
   },
 
   getToken(): string | null {

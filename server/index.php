@@ -48,6 +48,9 @@ if ($method === 'OPTIONS') {
 // AUTH ROUTES
 // ========================
 route('POST', '/api/auth/login', fn() => (new AuthController())->login());
+route('POST', '/api/auth/logout', fn() => (new AuthController())->logout());
+route('PUT', '/api/auth/password', fn() => (new AuthController())->updatePassword());
+route('PUT', '/api/auth/profile', fn() => (new AuthController())->updateProfile());
 route('GET', '/api/auth/me', fn() => (new AuthController())->me());
 
 // ========================

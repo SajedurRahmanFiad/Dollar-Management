@@ -19,19 +19,21 @@ export const customerService = {
   async create(data: {
     name: string;
     phone: string;
+    password: string;
     companyName?: string;
     notes?: string;
   }): Promise<Customer> {
     const res = await api.post<{ data: Customer }>('/customers', {
       name: data.name,
       phone: data.phone,
+      password: data.password,
       company_name: data.companyName,
       notes: data.notes,
     });
     return res.data;
   },
 
-  async update(id: number, updates: Partial<Customer>): Promise<Customer> {
+  async update(id: number, updates: Partial<Customer> & { password?: string }): Promise<Customer> {
     const res = await api.put<{ data: Customer }>(`/customers/${id}`, updates);
     return res.data;
   },

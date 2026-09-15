@@ -14,7 +14,7 @@ class DashboardController {
 
     public function stats(): void {
         // Total outstanding due
-        $stmt = $this->db->query("SELECT COALESCE(SUM(due_amount), 0) as total FROM deals WHERE status IN ('active_due', 'partially_paid')");
+        $stmt = $this->db->query("SELECT COALESCE(SUM(due_amount), 0) as total FROM deals WHERE status IN ('active_due', 'partially_paid', 'fundify_verification_pending')");
         $totalOutstandingDue = (float)$stmt->fetch()['total'];
 
         // Total USD volume (active + completed)

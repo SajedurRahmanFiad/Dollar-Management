@@ -51,17 +51,17 @@ class CustomerModel {
                 LEFT JOIN (
                     SELECT customer_id,
                         SUM(due_amount) AS current_due,
-                        SUM(CASE WHEN status IN (\'active_due\', \'partially_paid\', \'awaiting_confirmation\', \'completed\') THEN expected_bdt_amount ELSE 0 END) AS lifetime_value,
+                        SUM(CASE WHEN status IN (\'active_due\', \'partially_paid\', \'fundify_verification_pending\', \'awaiting_confirmation\', \'completed\') THEN expected_bdt_amount ELSE 0 END) AS lifetime_value,
                         SUM(dollar_amount) AS total_dollars_purchased,
                         SUM(paid_amount) AS total_amount_paid,
                         COUNT(*) AS total_deals_count,
-                        SUM(status IN (\'active_due\', \'partially_paid\', \'awaiting_confirmation\')) AS active_deals_count,
+                        SUM(status IN (\'active_due\', \'partially_paid\', \'fundify_verification_pending\', \'awaiting_confirmation\')) AS active_deals_count,
                         SUM(status = \'completed\') AS completed_deals_count,
                         SUM(status = \'disputed\') AS disputed_deals_count,
                         AVG(dollar_amount) AS average_deal_size_usd,
                         MAX(dollar_amount) AS largest_deal_usd,
                         MAX(COALESCE(completed_at, created_at)) AS last_activity_date,
-                        MAX(CASE WHEN status IN (\'active_due\', \'partially_paid\') AND due_amount > 0
+                        MAX(CASE WHEN status IN (\'active_due\', \'partially_paid\', \'fundify_verification_pending\') AND due_amount > 0
                             THEN DATEDIFF(CURRENT_TIMESTAMP, COALESCE(confirmed_at, created_at)) ELSE 0 END) AS oldest_unpaid_deal_days
                     FROM deals
                     GROUP BY customer_id
@@ -171,7 +171,7 @@ class CustomerModel {
             $summary['totalDollarsPurchased'] += $usd;
             $totalUsd += $usd;
 
-            if (in_array($status, ['active_due', 'partially_paid', 'awaiting_confirmation'])) {
+            if (in_array($status, ['active_due', 'partially_paid', 'fundify_verification_pending', 'awaiting_confirmation'])) {
                 $summary['activeDealsCount']++;
                 $summary['lifetimeValue'] += $expected;
             }
@@ -188,7 +188,7 @@ class CustomerModel {
             }
 
             // Calculate oldest unpaid deal days
-            if (in_array($status, ['active_due', 'partially_paid']) && $due > 0) {
+            if (in_array($status, ['active_due', 'partially_paid', 'fundify_verification_pending']) && $due > 0) {
                 $created = strtotime($deal['confirmed_at'] ?: $deal['created_at']);
                 $days = (int)((time() - $created) / 86400);
                 if ($days > $oldestUnpaidDays) {

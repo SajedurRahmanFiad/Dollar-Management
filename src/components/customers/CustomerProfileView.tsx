@@ -46,7 +46,7 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
     ? deals.filter((d) => d.customerId === customer.id)
     : [];
   const activeDeals = customerDeals.filter(
-    (d) => d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'awaiting_confirmation' || d.status === 'draft'
+    (d) => d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'fundify_verification_pending' || d.status === 'awaiting_confirmation' || d.status === 'draft'
   );
   const completedDeals = customerDeals.filter((d) => d.status === 'completed');
   const allPaymentEvents = customerDeals.flatMap((d) =>
@@ -54,7 +54,6 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
       .filter((e) => e.type === 'payment_proof_submitted' || e.type === 'payment_approved')
       .map((e) => ({ ...e, dealNumber: d.dealNumber, dealId: d.id }))
   ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  const summary = customer ? calculateCustomerSummary(customer, deals) : null;
   const dealsInView = activeTab === 'active'
     ? activeDeals
     : activeTab === 'completed'
@@ -79,6 +78,7 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
     );
   }
 
+  const summary = calculateCustomerSummary(customer, deals);
   const visibleDeals = dealsInView.slice(dealsPageStart, dealsPageEnd);
   const visiblePaymentEvents = allPaymentEvents.slice(paymentsPageStart, paymentsPageEnd);
 
@@ -95,11 +95,13 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <div className="flex flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-2.5">
+              <h1 className="order-last text-2xl font-bold text-slate-900 tracking-tight sm:order-none">
                 {customer.name}
               </h1>
-              <ClientBadge size="sm" variant="gold" />
+              <span className="order-first sm:order-none">
+                <ClientBadge size="sm" variant="gold" />
+              </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-3">
               <span className="flex items-center gap-1">
@@ -121,7 +123,7 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
           className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          <span>Create Deal for {customer.name.split(' ')[0]}</span>
+          <span>Deal</span>
         </button>
       </div>
 
@@ -273,7 +275,67 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
 
         {/* Tab Content: Deals Table */}
         {(activeTab === 'active' || activeTab === 'completed' || activeTab === 'all') && (
-          <div className="overflow-x-auto">
+          <div>
+            {/* Mobile Card List (< md) */}
+            <div className="space-y-3 bg-slate-50 p-3 md:hidden">
+              {dealsInView.length === 0 ? (
+                <div className="py-10 text-center text-xs text-slate-400">
+                  No deals in this tab.
+                </div>
+              ) : (
+                visibleDeals.map((deal) => (
+                  <div
+                    key={deal.id}
+                    onClick={() => onSelectDeal(deal.id)}
+                    className="flex cursor-pointer flex-col gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-xs transition-colors active:bg-slate-50"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="font-mono text-xs font-black text-slate-900">
+                          {deal.dealNumber}
+                        </span>
+                        <StatusBadge status={deal.status} size="sm" />
+                      </div>
+                      <div className="text-right">
+                        <div className="font-mono text-sm font-black text-slate-900">
+                          {formatUsd(deal.dollarAmount)} USD
+                        </div>
+                        <span className="font-mono text-[10px] text-slate-500">
+                          Rate: {formatRate(deal.exchangeRate)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-100/80 pt-2 text-xs">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <span className="block text-[10px] font-bold uppercase leading-tight text-slate-400">
+                            Settled
+                          </span>
+                          <span className="text-xs font-bold tabular-nums text-emerald-700">
+                            {formatBdt(deal.paidAmount)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="block text-[10px] font-bold uppercase leading-tight text-slate-400">
+                            Remaining Due
+                          </span>
+                          <span className={`text-xs font-black tabular-nums ${deal.dueAmount > 0 ? 'text-amber-700' : 'text-slate-400'}`}>
+                            {formatBdt(deal.dueAmount)}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="flex items-center gap-0.5 text-xs font-bold text-blue-600">
+                        Open <ChevronRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop Table (>= md) */}
+            <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
@@ -347,6 +409,7 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
                 )}
               </tbody>
             </table>
+            </div>
             <Pagination
               currentPage={dealsPage}
               totalPages={dealsTotalPages}

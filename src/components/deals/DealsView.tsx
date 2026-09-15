@@ -139,6 +139,7 @@ export const DealsView: React.FC<DealsViewProps> = ({
           {[
             { id: 'all', label: 'All' },
             { id: 'awaiting_confirmation', label: 'Awaiting Confirmation' },
+            { id: 'fundify_verification_pending', label: 'Fundify Verification Pending' },
             { id: 'active_due', label: 'Active Due' },
             { id: 'partially_paid', label: 'Partially Paid' },
             { id: 'completed', label: 'Settled' },

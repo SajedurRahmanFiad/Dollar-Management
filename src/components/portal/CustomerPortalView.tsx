@@ -36,6 +36,17 @@ interface CustomerPortalViewProps {
   onOpenNewRequestModal?: () => void;
 }
 
+const getProgressColor = (percent: number) => {
+  const red = [239, 68, 68];
+  const emerald = [16, 185, 129];
+  const ratio = Math.max(0, Math.min(100, percent)) / 100;
+  const channels = red.map((channel, index) =>
+    Math.round(channel + (emerald[index] - channel) * ratio)
+  );
+
+  return `rgb(${channels.join(', ')})`;
+};
+
 export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   onSelectDeal,
   onOpenNewRequestModal,
@@ -86,7 +97,7 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   );
   const activeDueDeals = customerDeals.filter(
     (d) =>
-      (d.status === 'active_due' || d.status === 'partially_paid') &&
+      (d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'fundify_verification_pending') &&
       d.dueAmount > 0
   );
   const completedDeals = customerDeals.filter((d) => d.status === 'completed');
@@ -414,7 +425,7 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                             className="h-full rounded-full"
                             style={{
                               width: `${progressPercent}%`,
-                              backgroundColor: `hsl(${Math.round(progressPercent * 1.2)}, 75%, 45%)`,
+                              backgroundColor: getProgressColor(progressPercent),
                             }}
                           />
                         </div>
@@ -507,7 +518,7 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                               className="h-full rounded-full"
                               style={{
                                 width: `${progressPercent}%`,
-                                backgroundColor: `hsl(${Math.round(progressPercent * 1.2)}, 75%, 45%)`,
+                                backgroundColor: getProgressColor(progressPercent),
                               }}
                             />
                           </div>
@@ -627,7 +638,7 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
       {/* Payment Proof Modal */}
       {receiptConfirmationDeal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs"
           onClick={() => setReceiptConfirmationDeal(null)}
         >
           <div

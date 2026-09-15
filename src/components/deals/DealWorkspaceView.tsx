@@ -299,9 +299,6 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
                 Payment Verification Pending ({pendingPayments.length})
               </h4>
             </div>
-            <span className="text-xs text-amber-800 font-medium">
-              Review customer uploaded transfer slip
-            </span>
           </div>
 
           {pendingPayments.map((p) => (
@@ -339,20 +336,13 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button
-                  onClick={() => setDeclineTargetEvent(p)}
-                  className="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>Decline</span>
-                </button>
+              <div className="flex w-full items-center justify-end sm:w-auto">
                 <button
                   onClick={() => approvePaymentProof(deal.id, p.id)}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all shadow-xs flex items-center gap-1.5"
+                  className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-emerald-700"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>Approve &amp; Deduct Due</span>
+                  <span>Approve</span>
                 </button>
               </div>
             </div>
@@ -472,7 +462,7 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
         </div>
 
         {/* Timeline Message Feed (Chat-style layout tailored for verified proof cards) */}
-        <div className="p-6 space-y-6 bg-slate-50/30">
+        <div className="space-y-6 bg-slate-50/30 px-3 py-6 sm:px-4">
           {deal.timeline.map((event, index) => {
             if (event.type === 'receipt_confirmed' || event.type === 'payment_approved') {
               return null;
@@ -483,46 +473,55 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
             const isSystemActor = event.actor === 'system';
             const isViewerActor =
               (isOwner && isOwnerActor) || (isCustomer && isCustomerActor);
+            const hasEventDescription = Boolean(event.description?.trim());
+            const isNoteLessPaymentProof =
+              event.type === 'payment_proof_submitted' && !hasEventDescription;
 
             return (
               <div
                 key={event.id}
-                className={`flex gap-3.5 ${
+                className={`flex gap-2.5 ${
                   isViewerActor ? 'flex-row-reverse' : 'flex-row'
                 }`}
               >
                 {/* Actor Avatar */}
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ${
-                    isOwnerActor
-                      ? 'bg-slate-900 text-white'
-                      : isCustomerActor
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-emerald-600 text-white'
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center text-xs font-bold ${
+                    isCustomerActor ? 'rounded-xl bg-slate-500 text-white' : ''
                   }`}
                 >
-                  {isOwnerActor ? '👑' : isCustomerActor ? '👤' : '✓'}
+                  {isOwnerActor ? (
+                    <img
+                      src="/uploads/Avatar.png"
+                      alt="Ahmed Sourov"
+                      className="h-8 w-8 object-cover"
+                    />
+                  ) : isCustomerActor ? '👤' : '✓'}
                 </div>
 
                 {/* Event Card Content */}
                 <div
-                  className={`max-w-xl w-full rounded-2xl p-4 shadow-xs border ${
+                  className={`max-w-xl w-full rounded-2xl ${
+                    isNoteLessPaymentProof
+                      ? ''
+                      : 'border p-4 shadow-xs'
+                  } ${
                     isOwnerActor
-                      ? `bg-white border-slate-200/70 text-slate-900 ${
+                      ? `${isNoteLessPaymentProof ? '' : 'bg-slate-50 border-slate-200/70'} text-slate-900 ${
                           isViewerActor ? 'rounded-tr-xs' : 'rounded-tl-xs'
                         }`
                       : isCustomerActor
-                      ? `bg-blue-50/40 border-blue-200/70 text-slate-900 ${
+                      ? `${isNoteLessPaymentProof ? '' : 'bg-blue-50/40 border-blue-200/70'} text-slate-900 ${
                           isViewerActor ? 'rounded-tr-xs' : 'rounded-tl-xs'
                         }`
-                      : 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+                      : `${isNoteLessPaymentProof ? '' : 'bg-emerald-50/60 border-emerald-200'} text-emerald-950`
                   }`}
                 >
                   {/* Card Header */}
                   <div className="flex items-center justify-between gap-2 mb-1.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-900">
-                        {event.actorName}
+                        {isOwnerActor ? 'Ahmed Sourov' : event.actorName}
                       </span>
                       <span className="text-[11px] text-slate-400">
                         {new Date(event.timestamp).toLocaleTimeString('en-US', {
@@ -532,25 +531,13 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
                       </span>
                     </div>
 
-                    {/* Event Tag */}
-                    {event.proofType && (
-                      <span
-                        className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
-                          event.proofType === 'usd_sent'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}
-                      >
-                        {event.proofType === 'usd_sent' ? '$ USD Sent Proof' : '৳ Payment Slip'}
-                      </span>
-                    )}
                   </div>
 
                   {/* Event Title & Description */}
                   <h4 className="text-sm font-semibold text-slate-900 mb-1">
                     {event.title}
                   </h4>
-                  {event.description && (
+                  {hasEventDescription && (
                     <p className="text-xs text-slate-600 leading-relaxed">
                       {event.description}
                     </p>
@@ -599,6 +586,16 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
                     </button>
                   )}
 
+                  {isOwner && event.type === 'payment_proof_submitted' && event.proofStatus === 'pending' && (
+                    <button
+                      onClick={() => approvePaymentProof(deal.id, event.id)}
+                      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-emerald-700"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      <span>Approve Payment</span>
+                    </button>
+                  )}
+
                   {/* Status Indicator for Payment Proofs */}
                   {event.proofStatus && (
                     <div className="mt-2 flex items-center gap-1.5 text-xs">
@@ -610,7 +607,7 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
                       )}
                       {event.proofStatus === 'pending' && (
                         <span className="text-amber-700 font-semibold flex items-center gap-1 animate-pulse">
-                          <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending Owner Review
+                          <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending Review
                         </span>
                       )}
                       {event.proofStatus === 'rejected' && (

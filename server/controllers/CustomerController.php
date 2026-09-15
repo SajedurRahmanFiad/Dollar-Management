@@ -3,16 +3,20 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../models/Customer.php';
 require_once __DIR__ . '/../models/Activity.php';
+require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../helpers/auth_helper.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/validator.php';
 
 class CustomerController {
     private CustomerModel $model;
     private ActivityModel $activityModel;
+    private UserModel $userModel;
 
     public function __construct() {
         $this->model = new CustomerModel();
         $this->activityModel = new ActivityModel();
+        $this->userModel = new UserModel();
     }
 
     public function index(): void {
@@ -66,7 +70,7 @@ class CustomerController {
 
     public function create(): void {
         $data = getJsonInput();
-        requireFields($data, ['name', 'phone']);
+        requireFields($data, ['name', 'phone', 'password']);
 
         $id = $this->model->create([
             'name' => sanitizeString($data['name']),
@@ -76,6 +80,12 @@ class CustomerController {
             'notes' => $data['notes'] ?? null,
             'preferred_channel' => $data['preferred_channel'] ?? $data['preferredChannel'] ?? 'WhatsApp',
             'avatar_color' => $data['avatar_color'] ?? 'bg-indigo-600',
+        ]);
+        $this->userModel->create([
+            'role' => 'customer',
+            'customer_id' => $id,
+            'username' => sanitizeString($data['phone']),
+            'password_hash' => hashPassword((string)$data['password']),
         ]);
 
         $customer = $this->model->getById($id);
@@ -109,6 +119,10 @@ class CustomerController {
         }
         if (array_key_exists('companyName', $data)) {
             $updates['company_name'] = $data['companyName'];
+        }
+
+        if (isset($data['password']) && trim((string)$data['password']) !== '') {
+            $this->userModel->updatePasswordByCustomerId($id, (string)$data['password']);
         }
 
         if (!empty($updates)) {

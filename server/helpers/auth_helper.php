@@ -35,11 +35,18 @@ function getAuthUser(): array {
     $headers = getallheaders();
     $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
 
-    if (!preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
+    $token = null;
+    if (preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
+        $token = $matches[1];
+    } elseif (!empty($_COOKIE['dems_token'])) {
+        $token = $_COOKIE['dems_token'];
+    }
+
+    if (!$token) {
         jsonError('Authorization token required', 401);
     }
 
-    $user = verifyToken($matches[1]);
+    $user = verifyToken($token);
     if (!$user) {
         jsonError('Invalid or expired token', 401);
     }

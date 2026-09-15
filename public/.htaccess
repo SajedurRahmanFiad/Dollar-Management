@@ -1,0 +1,20 @@
+RewriteEngine On
+
+# Never allow the environment file to be downloaded.
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>
+
+# The seeder is for setup only and must not be run over HTTP.
+RewriteRule ^server/seed\.php$ - [F,L]
+
+# Send API requests to the PHP router.
+RewriteRule ^api(?:/.*)?$ server/index.php [QSA,L]
+
+# Keep existing files and directories working.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Support React client-side routes.
+RewriteRule ^ index.html [L]

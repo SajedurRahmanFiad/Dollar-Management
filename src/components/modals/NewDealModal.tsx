@@ -72,7 +72,7 @@ export const NewDealModal: React.FC<NewDealModalProps> = ({
   const commonRates = [122.00, 122.50, 123.00, 123.50];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
       <div
         className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-100 max-h-[90vh] sm:max-h-[85vh] flex flex-col my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -81,7 +81,6 @@ export const NewDealModal: React.FC<NewDealModalProps> = ({
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div>
             <h3 className="text-sm sm:text-base font-bold text-slate-900">Create New Deal</h3>
-            <p className="text-[11px] sm:text-xs text-slate-500">Record a new dollar sale agreement</p>
           </div>
           <button
             onClick={onClose}
@@ -186,9 +185,6 @@ export const NewDealModal: React.FC<NewDealModalProps> = ({
             <div className="text-right text-xs text-slate-400 space-y-0.5">
               <div>
                 <span className="text-slate-300 font-medium">${numUsd.toLocaleString()}</span> × {formatRate(numRate)}
-              </div>
-              <div className="text-[10px] text-emerald-300/80">
-                Auto-calculated settlement amount
               </div>
             </div>
           </div>

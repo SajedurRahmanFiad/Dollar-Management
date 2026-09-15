@@ -1,95 +1,143 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Search,
-  Plus,
-  RefreshCw,
-  User,
-  DollarSign,
-  ChevronDown,
-  ShieldAlert,
-  Sparkles,
-  Menu,
   X,
+  LogOut,
+  UserRound,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useExchange } from '../../context/ExchangeContext';
-import { formatBdt } from '../../utils/calculations';
 
-interface HeaderProps {
-  onOpenNewDealModal: () => void;
-  onOpenNewRequestModal: () => void;
-}
-
-export const Header: React.FC<HeaderProps> = ({
-  onOpenNewDealModal,
-  onOpenNewRequestModal,
-}) => {
+export const Header: React.FC = () => {
+  const { user, logout } = useAuth();
   const {
     deals,
     customers,
+    requests,
     searchQuery,
     setSearchQuery,
     activeRole,
-    setActiveRole,
-    activeCustomerId,
-    setActiveCustomerId,
-    resetToMockData,
+    setCurrentView,
+    setSelectedDealId,
+    setSelectedCustomerId,
   } = useExchange();
 
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isMobileAccountOpen, setIsMobileAccountOpen] = useState(false);
 
-  const currentCustomer =
-    customers.find((c) => c.id === activeCustomerId) || customers[0];
+  const suggestions = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
 
-  // Owner aggregate due
-  const totalOwnerOutstandingDue = deals
-    .filter(
-      (d) =>
-        (d.status === 'active_due' || d.status === 'partially_paid') &&
-        d.dueAmount > 0
-    )
-    .reduce((sum, d) => sum + d.dueAmount, 0);
+    const items: Array<{
+      id: string;
+      label: string;
+      detail: string;
+      type: 'deal' | 'customer' | 'request';
+    }> = [];
 
-  // Customer personal due
-  const customerPersonalDue = currentCustomer
-    ? deals
-        .filter(
-          (d) =>
-            d.customerId === currentCustomer.id &&
-            (d.status === 'active_due' || d.status === 'partially_paid') &&
-            d.dueAmount > 0
-        )
-        .reduce((sum, d) => sum + d.dueAmount, 0)
-    : 0;
+    deals
+      .filter((deal) =>
+        [deal.dealNumber, deal.customerName, deal.customerPhone]
+          .some((value) => value.toLowerCase().includes(query))
+      )
+      .slice(0, 4)
+      .forEach((deal) => items.push({
+        id: deal.id,
+        label: deal.dealNumber,
+        detail: deal.customerName,
+        type: 'deal',
+      }));
+
+    customers
+      .filter((customer) =>
+        [customer.name, customer.phone, customer.companyName || '']
+          .some((value) => value.toLowerCase().includes(query))
+      )
+      .slice(0, 3)
+      .forEach((customer) => items.push({
+        id: customer.id,
+        label: customer.name,
+        detail: customer.phone,
+        type: 'customer',
+      }));
+
+    requests
+      .filter((request) =>
+        [request.requestNumber, request.customerName, request.customerPhone]
+          .some((value) => value.toLowerCase().includes(query))
+      )
+      .slice(0, 2)
+      .forEach((request) => items.push({
+        id: request.id,
+        label: request.requestNumber,
+        detail: request.customerName,
+        type: 'request',
+      }));
+
+    return items.slice(0, 6);
+  }, [customers, deals, requests, searchQuery]);
+
+  const handleSuggestionSelect = (suggestion: (typeof suggestions)[number]) => {
+    setSearchQuery('');
+    if (suggestion.type === 'deal') {
+      setSelectedDealId(suggestion.id);
+    } else if (suggestion.type === 'customer') {
+      setSelectedCustomerId(suggestion.id);
+      setCurrentView('customers');
+    } else {
+      setCurrentView('requests');
+    }
+    setIsMobileSearchOpen(false);
+  };
+
+  const renderSuggestions = () => suggestions.length > 0 && (
+    <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+      {suggestions.map((suggestion) => (
+        <button
+          key={`${suggestion.type}-${suggestion.id}`}
+          type="button"
+          onClick={() => handleSuggestionSelect(suggestion)}
+          className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-xs transition-colors hover:bg-slate-50"
+        >
+          <span className="font-bold text-slate-800">{suggestion.label}</span>
+          <span className="truncate text-slate-400">{suggestion.detail}</span>
+        </button>
+      ))}
+    </div>
+  );
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 px-3 sm:px-6 py-2.5 transition-all">
-      <div className="flex items-center justify-between gap-2 sm:gap-4">
+    <header className="sticky top-0 z-30 min-h-16 bg-white/95 backdrop-blur-md border-b border-slate-100 px-3 sm:px-6 py-2.5 transition-all">
+      <div className="relative flex min-h-11 items-center justify-between gap-2 sm:gap-4">
         {/* Left Side: Brand Indicator */}
         <div className="flex items-center gap-2">
           <div className="lg:hidden flex items-center gap-2">
             <img
               src="/uploads/logoPNGFIT.png"
               alt="Fundify"
-              className="h-8 w-auto max-w-[120px] object-contain"
+              className="h-8 w-auto max-w-30 object-contain"
             />
           </div>
 
-          {/* Search Bar (Desktop) */}
-          <div className="hidden md:block w-48 lg:w-72">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder={
-                  activeRole === 'customer'
-                    ? 'Search orders & receipts...'
-                    : 'Search deals, clients...'
-                }
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all placeholder:text-slate-400"
-              />
-            </div>
+        </div>
+
+        {/* Search Bar (Desktop) */}
+        <div className="absolute left-1/2 top-1/2 hidden w-64 -translate-x-1/2 -translate-y-1/2 md:block lg:w-96">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder={
+                activeRole === 'customer'
+                  ? 'Search orders & receipts...'
+                  : 'Search deals, clients...'
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all placeholder:text-slate-400"
+            />
+            {renderSuggestions()}
           </div>
         </div>
 
@@ -108,96 +156,41 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* If in Customer Role: Show Active Customer Picker */}
-          {activeRole === 'customer' && (
-            <div className="flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2 py-1 rounded-xl max-w-[130px] sm:max-w-none">
-              <span className="hidden sm:inline text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Client:
-              </span>
-              <select
-                value={currentCustomer?.id || ''}
-                onChange={(e) => setActiveCustomerId(e.target.value)}
-                className="bg-transparent text-[11px] sm:text-xs font-bold text-slate-800 focus:outline-none cursor-pointer truncate pr-0.5"
-              >
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Financial Stat Pill */}
-          <div
-            className={`hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-xl border ${
-              activeRole === 'customer'
-                ? customerPersonalDue > 0
-                  ? 'bg-amber-50 border-amber-200/80 text-amber-950'
-                  : 'bg-emerald-50 border-emerald-200/80 text-emerald-950'
-                : 'bg-amber-50 border-amber-200/80 text-amber-950'
-            }`}
-          >
-            <div
-              className={`w-2 h-2 rounded-full ${
-                (activeRole === 'customer'
-                  ? customerPersonalDue
-                  : totalOwnerOutstandingDue) > 0
-                  ? 'bg-amber-500 animate-pulse'
-                  : 'bg-emerald-500'
-              }`}
-            />
-            <div className="text-left">
-              <span className="text-[8px] sm:text-[9px] font-bold text-slate-500 uppercase tracking-wider block leading-none">
-                {activeRole === 'customer' ? 'My Due' : 'Due Owed'}
-              </span>
-              <span className="text-xs font-black tabular-nums leading-tight block">
-                {formatBdt(
-                  activeRole === 'customer'
-                    ? customerPersonalDue
-                    : totalOwnerOutstandingDue
-                )}
-              </span>
-            </div>
+          <div className="relative md:hidden">
+            <button
+              type="button"
+              onClick={() => setIsMobileAccountOpen((open) => !open)}
+              aria-label="Account menu"
+              aria-expanded={isMobileAccountOpen}
+              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-slate-800 text-xs font-black text-white ring-2 ring-white hover:bg-slate-700"
+            >
+              {user?.name?.charAt(0).toUpperCase() || <UserRound className="h-4 w-4" />}
+            </button>
+            {isMobileAccountOpen && (
+              <div className="absolute right-0 top-full z-50 mt-2 w-36 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentView('profile');
+                    setIsMobileAccountOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  <UserRound className="h-4 w-4 text-slate-400" />
+                  Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  <LogOut className="h-4 w-4 text-slate-400" />
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Role Switcher Pill */}
-          <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-xl text-xs font-bold">
-            <button
-              onClick={() => setActiveRole('owner')}
-              className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs transition-all ${
-                activeRole === 'owner'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              Admin
-            </button>
-            <button
-              onClick={() => setActiveRole('customer')}
-              className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs transition-all flex items-center gap-1 ${
-                activeRole === 'customer'
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Sparkles className="w-2.5 h-2.5" />
-              <span>Client</span>
-            </button>
-          </div>
-
-          {/* Reset Demo Data Button */}
-          <button
-            onClick={() => {
-              if (confirm('Reset system data to initial state?')) {
-                resetToMockData();
-              }
-            }}
-            title="Reset Demo Data"
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
         </div>
       </div>
 
@@ -218,6 +211,7 @@ export const Header: React.FC<HeaderProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all placeholder:text-slate-400"
             />
+            {renderSuggestions()}
           </div>
         </div>
       )}

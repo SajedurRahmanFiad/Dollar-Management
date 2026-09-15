@@ -140,7 +140,7 @@ echo "  - Inserted " . count($activities) . " activities\n";
 // 6. Create user accounts
 echo "Seeding user accounts...\n";
 $users = [
-    ['role' => 'owner', 'customer_id' => null, 'username' => 'admin', 'password' => 'admin123'],
+    ['role' => 'owner', 'customer_id' => null, 'username' => '01888699210', 'password' => 'admin@fundify'],
     ['role' => 'customer', 'customer_id' => 1, 'username' => '+880 1711-234567', 'password' => 'password123'],
     ['role' => 'customer', 'customer_id' => 2, 'username' => '+880 1819-876543', 'password' => 'password123'],
     ['role' => 'customer', 'customer_id' => 3, 'username' => '+880 1912-334455', 'password' => 'password123'],
@@ -157,5 +157,5 @@ echo "  - Inserted " . count($users) . " user accounts\n";
 
 echo "\n=== Seeding complete! ===\n\n";
 echo "Login credentials:\n";
-echo "  Admin:  username=admin, password=admin123\n";
+echo "  Admin:  username=01888699210, password=admin@fundify\n";
 echo "  Customer accounts: use phone number as username, password=password123\n";

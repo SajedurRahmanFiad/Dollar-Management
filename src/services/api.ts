@@ -5,17 +5,9 @@ class ApiClient {
 
   setToken(token: string | null) {
     this.token = token;
-    if (token) {
-      localStorage.setItem('dems_token', token);
-    } else {
-      localStorage.removeItem('dems_token');
-    }
   }
 
   getToken(): string | null {
-    if (!this.token) {
-      this.token = localStorage.getItem('dems_token');
-    }
     return this.token;
   }
 

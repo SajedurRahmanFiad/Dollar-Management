@@ -2,6 +2,7 @@ export type DealStatus =
   | 'draft'
   | 'dollar_sent_pending'
   | 'awaiting_confirmation'
+  | 'fundify_verification_pending'
   | 'active_due'
   | 'partially_paid'
   | 'completed'
@@ -11,6 +12,8 @@ export type DealStatus =
 export type RequestStatus = 'new' | 'under_discussion' | 'converted' | 'cancelled' | 'pending' | 'rejected' | 'archived';
 
 export type ActorRole = 'owner' | 'customer' | 'system';
+
+export type AppView = 'dashboard' | 'deals' | 'customers' | 'dues' | 'requests' | 'analytics' | 'portal' | 'profile';
 
 export type TimelineEventType = 
   | 'deal_created'

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Phone, Building2 } from 'lucide-react';
+import { X, Phone, Building2, Eye, EyeOff } from 'lucide-react';
 import { useExchange } from '../../context/ExchangeContext';
 
 interface NewCustomerModalProps {
@@ -16,17 +16,20 @@ export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [notes, setNotes] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim()) return;
+    if (!name.trim() || !phone.trim() || !password) return;
 
     const customer = await createCustomer({
       name: name.trim(),
       phone: phone.trim(),
+      password,
       companyName: companyName.trim() || undefined,
       notes: notes.trim() || undefined,
     });
@@ -37,7 +40,7 @@ export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
       <div
         className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 max-h-[90vh] sm:max-h-[85vh] flex flex-col my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -46,7 +49,31 @@ export const NewCustomerModal: React.FC<NewCustomerModalProps> = ({
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div>
             <h3 className="text-sm sm:text-base font-black text-slate-900">Onboard New Client</h3>
-            <p className="text-[11px] sm:text-xs text-slate-500">Create client relationship profile</p>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              Login Password <span className="text-rose-500">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                minLength={6}
+                placeholder="Set a password for the client"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 pr-10 text-xs font-bold text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-900"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
           <button
             onClick={onClose}

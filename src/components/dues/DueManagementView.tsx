@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   Clock,
   DollarSign,
+  Search,
   Phone,
   Send,
   MessageSquare,
@@ -34,7 +35,15 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
   onSelectDeal,
   onSelectCustomer,
 }) => {
-  const { customers, deals, activeRole, activeCustomerId, submitPaymentProof } = useExchange();
+  const {
+    customers,
+    deals,
+    activeRole,
+    activeCustomerId,
+    searchQuery,
+    setSearchQuery,
+    submitPaymentProof,
+  } = useExchange();
 
   const [activePaymentDeal, setActivePaymentDeal] = useState<
     typeof deals[0] | null
@@ -55,7 +64,10 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
     const myDueDeals = myDeals.filter(
       (d) =>
         (d.status === 'active_due' || d.status === 'partially_paid') &&
-        d.dueAmount > 0
+        d.dueAmount > 0 &&
+        (!searchQuery.trim() ||
+          [d.dealNumber, d.customerName, d.customerPhone]
+            .some((value) => value.toLowerCase().includes(searchQuery.toLowerCase())))
     );
     const myTotalDue = myDueDeals.reduce((sum, d) => sum + d.dueAmount, 0);
 
@@ -77,10 +89,19 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
 
     return (
       <div className="space-y-6 max-w-4xl mx-auto pb-10 animate-in fade-in duration-150">
-        <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
             My Dues &amp; Payment Ledger
           </h1>
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search my dues..."
+              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8 pr-3 text-xs text-slate-800 outline-none focus:border-slate-900"
+            />
+          </div>
         </div>
 
         {/* Due Card */}
@@ -265,7 +286,10 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
           (d) =>
             d.customerId === c.id &&
             (d.status === 'active_due' || d.status === 'partially_paid') &&
-            d.dueAmount > 0
+            d.dueAmount > 0 &&
+            (!searchQuery.trim() ||
+              [c.name, c.phone, c.companyName || '', d.dealNumber]
+                .some((value) => value.toLowerCase().includes(searchQuery.toLowerCase())))
         );
         return {
           customer: c,
@@ -273,9 +297,9 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
           unpaidDeals,
         };
       })
-      .filter((item) => item.summary.currentDue > 0)
+        .filter((item) => item.summary.currentDue > 0)
       .sort((a, b) => b.summary.currentDue - a.summary.currentDue);
-  }, [customers, deals]);
+      }, [customers, deals, searchQuery]);
 
   const totalOutstanding = debtors.reduce(
     (sum, d) => sum + d.summary.currentDue,
@@ -289,10 +313,19 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
     <div className="space-y-6 max-w-7xl mx-auto pb-10 animate-in fade-in duration-150">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
-        <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <h1 className="text-xl font-black text-slate-900 tracking-tight">
             Due Ledger
           </h1>
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search clients or deals..."
+              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8 pr-3 text-xs text-slate-800 outline-none focus:border-slate-900"
+            />
+          </div>
         </div>
 
         <div className="bg-amber-50 border border-amber-200/80 rounded-2xl px-4 py-2.5 flex items-center gap-3">

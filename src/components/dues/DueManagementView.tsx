@@ -63,7 +63,8 @@ export const DueManagementView: React.FC<DueManagementViewProps> = ({
     const myDeals = deals.filter((d) => d.customerId === currentCustomer?.id);
     const myDueDeals = myDeals.filter(
       (d) =>
-        (d.status === 'active_due' || d.status === 'partially_paid') &&
+        d.status !== 'completed' &&
+        d.status !== 'cancelled' &&
         d.dueAmount > 0 &&
         (!searchQuery.trim() ||
           [d.dealNumber, d.customerName, d.customerPhone]

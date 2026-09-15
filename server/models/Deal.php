@@ -97,13 +97,14 @@ class DealModel {
         $stmt = $this->db->prepare(
             'INSERT INTO deals (deal_number, customer_id, dollar_amount, exchange_rate,
              expected_bdt_amount, paid_amount, due_amount, status, notes, linked_request_id)
-             VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?)'
+             VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $data['deal_number'],
             $data['customer_id'],
             $data['dollar_amount'],
             $data['exchange_rate'],
+            $data['expected_bdt_amount'],
             $data['expected_bdt_amount'],
             $data['status'] ?? 'draft',
             $data['notes'] ?? null,

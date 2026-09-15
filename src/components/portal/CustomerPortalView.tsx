@@ -97,7 +97,8 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   );
   const activeDueDeals = customerDeals.filter(
     (d) =>
-      (d.status === 'active_due' || d.status === 'partially_paid' || d.status === 'fundify_verification_pending') &&
+      d.status !== 'completed' &&
+      d.status !== 'cancelled' &&
       d.dueAmount > 0
   );
   const completedDeals = customerDeals.filter((d) => d.status === 'completed');

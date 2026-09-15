@@ -2,6 +2,10 @@
 declare(strict_types=1);
 
 function mapDeal(array $row): array {
+    $status = $row['status'];
+    $storedDue = (float)$row['due_amount'];
+    $calculatedDue = max(0, (float)$row['expected_bdt_amount'] - (float)$row['paid_amount']);
+
     return [
         'id' => (string)$row['id'],
         'dealNumber' => $row['deal_number'],
@@ -12,8 +16,8 @@ function mapDeal(array $row): array {
         'exchangeRate' => (float)$row['exchange_rate'],
         'expectedBdtAmount' => (float)$row['expected_bdt_amount'],
         'paidAmount' => (float)$row['paid_amount'],
-        'dueAmount' => (float)$row['due_amount'],
-        'status' => $row['status'],
+        'dueAmount' => $status === 'draft' ? max($storedDue, $calculatedDue) : $storedDue,
+        'status' => $status,
         'createdAt' => $row['created_at'],
         'confirmedAt' => $row['confirmed_at'] ?? null,
         'completedAt' => $row['completed_at'] ?? null,

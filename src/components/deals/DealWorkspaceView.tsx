@@ -85,8 +85,13 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
 
   const hasDollarProof = Boolean(deal.dollarProofUrl);
   const isAwaitingConfirmation = deal.status === 'awaiting_confirmation';
-  const isActiveDue = deal.status === 'active_due' || deal.status === 'partially_paid';
   const isCompleted = deal.status === 'completed';
+  const hasOutstandingBalance = deal.dueAmount > 0 || deal.expectedBdtAmount > deal.paidAmount;
+  const canSubmitPayment =
+    isCustomer &&
+    hasOutstandingBalance &&
+    deal.status !== 'completed' &&
+    deal.status !== 'cancelled';
 
   const pendingPayments = deal.timeline.filter(
     (e) => e.type === 'payment_proof_submitted' && e.proofStatus === 'pending'
@@ -350,8 +355,8 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
         </div>
       )}
 
-      {/* 4. Customer: Active Due -> Quick Make Payment Button */}
-      {isCustomer && isActiveDue && (
+      {/* 4. Customer: Submit Payment Proof whenever there is an outstanding balance */}
+      {canSubmitPayment && (
         <div className="p-4 bg-slate-900 text-white rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
           <div>
             <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">
@@ -361,7 +366,7 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
               {formatBdt(deal.dueAmount)}
             </div>
             <p className="text-xs text-slate-300 mt-0.5">
-              Upload your payment receipt screenshot to settle this balance.
+              Upload your payment receipt screenshot whenever you make a payment.
             </p>
           </div>
           <button
@@ -449,7 +454,7 @@ export const DealWorkspaceView: React.FC<DealWorkspaceViewProps> = ({ dealId, on
 
           {/* Quick Action Buttons in Timeline Header */}
           <div className="flex items-center gap-2">
-            {isCustomer && Boolean(deal.confirmedAt) && isActiveDue && (
+            {canSubmitPayment && (
               <button
                 onClick={() => setIsSubmitPaymentModalOpen(true)}
                 className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
